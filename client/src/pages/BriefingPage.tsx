@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
 import { api } from '../services/api';
 import { MorningBriefing } from '../types';
 import { AbsentStudentsList } from '../components/briefing/AbsentStudentsList';
