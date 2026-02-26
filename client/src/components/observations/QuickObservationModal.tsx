@@ -14,7 +14,7 @@ const CATEGORIES: { value: ObservationCategory; label: string }[] = [
   { value: 'BEHAVIORAL', label: 'Behavioral' },
   { value: 'SOCIAL_EMOTIONAL', label: 'Social-Emotional' },
   { value: 'ATTENDANCE', label: 'Attendance' },
-  { value: 'OTHER', label: 'Other' },
+  { value: 'POSITIVE', label: 'Positive' },
 ];
 
 const SEVERITIES: { value: ObservationSeverity; label: string; color: string }[] = [

@@ -85,14 +85,14 @@ async function main() {
     { first: 'James', last: 'Washington', grade: 9, ell: false, iep: false, has504: false, gpa: 2.1, risk: 'NEEDS_SUPPORT' as const, section: algebraP3 },
     { first: 'Maria', last: 'Rodriguez', grade: 9, ell: true, iep: false, has504: false, gpa: 3.2, risk: 'ON_TRACK' as const, section: algebraP3 },
     { first: 'Tyler', last: 'Chen', grade: 9, ell: false, iep: true, has504: false, gpa: 2.8, risk: 'ON_TRACK' as const, section: algebraP3 },
-    { first: 'Sofia', last: 'Hernandez', grade: 9, ell: true, iep: false, has504: true, gpa: 1.9, risk: 'URGENT' as const, section: algebraP3 },
+    { first: 'Sofia', last: 'Hernandez', grade: 9, ell: true, iep: false, has504: true, gpa: 1.9, risk: 'NEEDS_SUPPORT' as const, section: algebraP3 },
     { first: 'Aiden', last: 'Johnson', grade: 9, ell: false, iep: false, has504: false, gpa: 3.8, risk: 'ON_TRACK' as const, section: algebraP3 },
     { first: 'Emma', last: 'Williams', grade: 9, ell: false, iep: false, has504: false, gpa: 3.5, risk: 'ON_TRACK' as const, section: algebraP5 },
-    { first: 'Liam', last: 'Brown', grade: 9, ell: false, iep: false, has504: false, gpa: 2.4, risk: 'NEEDS_SUPPORT' as const, section: algebraP5 },
+    { first: 'Liam', last: 'Brown', grade: 9, ell: false, iep: false, has504: false, gpa: 2.4, risk: 'WATCH' as const, section: algebraP5 },
     { first: 'Olivia', last: 'Davis', grade: 9, ell: false, iep: true, has504: false, gpa: 2.9, risk: 'ON_TRACK' as const, section: algebraP5 },
     { first: 'Noah', last: 'Garcia', grade: 10, ell: false, iep: false, has504: false, gpa: 3.1, risk: 'ON_TRACK' as const, section: geometryP1 },
-    { first: 'Ava', last: 'Martinez', grade: 10, ell: false, iep: false, has504: true, gpa: 2.6, risk: 'NEEDS_SUPPORT' as const, section: geometryP1 },
-    { first: 'Ethan', last: 'Miller', grade: 10, ell: false, iep: false, has504: false, gpa: 1.5, risk: 'URGENT' as const, section: geometryP1 },
+    { first: 'Ava', last: 'Martinez', grade: 10, ell: false, iep: false, has504: true, gpa: 2.6, risk: 'WATCH' as const, section: geometryP1 },
+    { first: 'Ethan', last: 'Miller', grade: 10, ell: false, iep: false, has504: false, gpa: 1.5, risk: 'NEEDS_SUPPORT' as const, section: geometryP1 },
     { first: 'Isabella', last: 'Wilson', grade: 10, ell: true, iep: false, has504: false, gpa: 3.4, risk: 'ON_TRACK' as const, section: geometryP1 },
   ];
 
@@ -337,6 +337,40 @@ async function main() {
       category: 'ACADEMIC',
       severity: 'POSITIVE',
       content: 'Aiden showed excellent leadership during the group project. He helped two struggling classmates understand the material.',
+    },
+  });
+
+  // Positive-category observation
+  await prisma.observation.create({
+    data: {
+      studentId: students[1].id, // Maria Rodriguez
+      teacherId: teacher.id,
+      category: 'POSITIVE',
+      severity: 'POSITIVE',
+      content: 'Maria volunteered to help translate instructions for a new ELL student. She showed exceptional empathy and patience.',
+    },
+  });
+
+  // ─── Parent Contacts ────────────────────────────────────────────────
+  await prisma.parentContact.create({
+    data: {
+      studentId: jamesStudent.id,
+      teacherId: teacher.id,
+      method: 'PHONE',
+      subject: 'Attendance concerns',
+      notes: 'Called home to discuss recent absences. Parent mentioned James has been dealing with a family situation. Will follow up next week.',
+      sentiment: 'CONCERN',
+    },
+  });
+
+  await prisma.parentContact.create({
+    data: {
+      studentId: students[4].id, // Aiden Johnson
+      teacherId: teacher.id,
+      method: 'EMAIL',
+      subject: 'Great work this week!',
+      notes: 'Sent positive email about leadership during group project.',
+      sentiment: 'POSITIVE',
     },
   });
 

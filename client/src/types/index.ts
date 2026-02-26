@@ -26,6 +26,15 @@ export interface MorningBriefing {
   interventionTasks: InterventionTask[];
   accommodationAlerts: AccommodationAlert[];
   newStudents: NewStudent[];
+  relationshipMonitor: RelationshipMonitorEntry[];
+}
+
+export interface RelationshipMonitorEntry {
+  studentId: string;
+  firstName: string;
+  lastName: string;
+  photoUrl: string | null;
+  daysSincePositiveInteraction: number;
 }
 
 export interface AbsentStudent {
@@ -235,7 +244,7 @@ export interface StudentProfile {
 
 // ─── Observations ──────────────────────────────────────────────────────
 
-export type ObservationCategory = 'ACADEMIC' | 'BEHAVIORAL' | 'SOCIAL_EMOTIONAL' | 'ATTENDANCE' | 'OTHER';
+export type ObservationCategory = 'ACADEMIC' | 'BEHAVIORAL' | 'SOCIAL_EMOTIONAL' | 'ATTENDANCE' | 'POSITIVE';
 export type ObservationSeverity = 'POSITIVE' | 'CONCERN' | 'URGENT';
 
 export interface CreateObservationInput {
@@ -269,4 +278,99 @@ export interface Notification {
   isRead: boolean;
   createdAt: string;
   studentId?: string;
+}
+
+// ─── Communication Suite ──────────────────────────────────────────────
+
+export interface PositiveContactSuggestion {
+  studentId: string;
+  firstName: string;
+  lastName: string;
+  photoUrl: string | null;
+  reason: string;
+  draftMessage: string;
+  guardianEmail: string | null;
+  guardianName: string;
+}
+
+export interface ConferencePrepKit {
+  student: {
+    firstName: string;
+    lastName: string;
+    gradeLevel: number;
+    photoUrl: string | null;
+  };
+  gradesSummary: { sectionName: string; gradePercent: number; letterGrade: string; missingCount: number }[];
+  attendanceSummary: { overallRate: number; daysAbsentThisMonth: number; tardyCount: number };
+  strengths: string[];
+  concerns: string[];
+  accommodations: string[];
+  talkingPoints: string[];
+  guardians: { name: string; email: string | null; phone: string | null; relation: string }[];
+}
+
+export interface ParentContactRecord {
+  id: string;
+  studentId: string;
+  studentName: string;
+  method: string;
+  subject: string;
+  notes: string;
+  sentiment: string;
+  createdAt: string;
+}
+
+// ─── Smart Grouping ──────────────────────────────────────────────────
+
+export interface SmartGroup {
+  label: string;
+  recommendation: string;
+  students: { studentId: string; firstName: string; lastName: string; avgScore: number }[];
+}
+
+// ─── Professional Growth Insights ────────────────────────────────────
+
+export interface ProfessionalInsights {
+  sectionComparison: {
+    sectionName: string;
+    averageGrade: number;
+    failingCount: number;
+    studentCount: number;
+  }[];
+  assignmentEffectiveness: {
+    assignmentName: string;
+    sectionName: string;
+    avgScore: number;
+    completionRate: number;
+    discriminationRating: string;
+    insight: string;
+  }[];
+  gradingPatterns: {
+    type: string;
+    insight: string;
+  }[];
+  observationStats: {
+    totalThisMonth: number;
+    positiveRatio: number;
+    categoryCounts: { category: string; count: number }[];
+  };
+}
+
+// ─── Substitute Brief ────────────────────────────────────────────────
+
+export interface SubstituteBrief {
+  section: {
+    courseName: string;
+    period: string;
+    room: string | null;
+  };
+  students: {
+    firstName: string;
+    lastName: string;
+    seatLabel: string | null;
+    accommodationNotes: string | null;
+    interventionNotes: string | null;
+  }[];
+  teacherNotes: string | null;
+  generatedAt: string;
 }

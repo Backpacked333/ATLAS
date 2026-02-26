@@ -37,7 +37,7 @@ export function StudentProfilePage() {
 
   if (!profile) return <p className="text-gray-500">Student not found.</p>;
 
-  const riskColor = profile.riskTier === 'URGENT' ? 'red' : profile.riskTier === 'NEEDS_SUPPORT' ? 'amber' : 'green';
+  const riskColor = profile.riskTier === 'NEEDS_SUPPORT' ? 'red' : profile.riskTier === 'WATCH' ? 'amber' : 'green';
 
   return (
     <div className="space-y-4">
@@ -55,7 +55,7 @@ export function StudentProfilePage() {
               <p className="text-sm text-gray-500">Grade {profile.gradeLevel}</p>
               <div className="flex gap-2 mt-1">
                 <span className={`badge badge-${riskColor}`}>
-                  {profile.riskTier === 'ON_TRACK' ? 'On Track' : profile.riskTier === 'NEEDS_SUPPORT' ? 'Needs Support' : 'Urgent'}
+                  {profile.riskTier === 'ON_TRACK' ? 'On Track' : profile.riskTier === 'WATCH' ? 'Watch' : 'Needs Support'}
                 </span>
                 {profile.ellStatus && <span className="badge badge-blue">ELL</span>}
                 {profile.iepActive && <span className="badge badge-purple">IEP</span>}

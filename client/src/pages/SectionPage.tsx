@@ -1,13 +1,15 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { api } from '../services/api';
-import { SectionSummary, SeatInfo } from '../types';
+import { SectionSummary, SeatInfo, SmartGroup, SubstituteBrief } from '../types';
 
 export function SectionPage() {
   const { sectionId } = useParams<{ sectionId: string }>();
   const [section, setSection] = useState<SectionSummary | null>(null);
   const [seats, setSeats] = useState<SeatInfo[]>([]);
-  const [tab, setTab] = useState<'overview' | 'assignments' | 'seating'>('overview');
+  const [groups, setGroups] = useState<SmartGroup[]>([]);
+  const [subBrief, setSubBrief] = useState<SubstituteBrief | null>(null);
+  const [tab, setTab] = useState<'overview' | 'assignments' | 'seating' | 'grouping' | 'substitute'>('overview');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -78,18 +80,36 @@ export function SectionPage() {
 
       {/* Tabs */}
       <div className="border-b border-atlas-border">
-        <nav className="flex gap-4">
-          {(['overview', 'assignments', 'seating'] as const).map((t) => (
+        <nav className="flex gap-4 overflow-x-auto">
+          {([
+            ['overview', 'Overview'],
+            ['assignments', 'Assignments'],
+            ['grouping', 'Smart Groups'],
+            ['seating', 'Seating Chart'],
+            ['substitute', 'Sub Brief'],
+          ] as const).map(([t, label]) => (
             <button
               key={t}
-              onClick={() => setTab(t)}
-              className={`pb-2 text-sm font-medium border-b-2 transition-colors ${
+              onClick={() => {
+                setTab(t);
+                if (t === 'grouping' && groups.length === 0 && sectionId) {
+                  api.get<SmartGroup[]>(`/sections/${sectionId}/groups`)
+                    .then(setGroups)
+                    .catch(() => {});
+                }
+                if (t === 'substitute' && !subBrief && sectionId) {
+                  api.get<SubstituteBrief>(`/substitute/${sectionId}`)
+                    .then(setSubBrief)
+                    .catch(() => {});
+                }
+              }}
+              className={`pb-2 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
                 tab === t
                   ? 'border-atlas-primary text-atlas-primary'
                   : 'border-transparent text-gray-500 hover:text-gray-700'
               }`}
             >
-              {t === 'overview' ? 'Overview' : t === 'assignments' ? 'Assignments' : 'Seating Chart'}
+              {label}
             </button>
           ))}
         </nav>
@@ -199,6 +219,49 @@ export function SectionPage() {
         </div>
       )}
 
+      {tab === 'grouping' && (
+        <div className="space-y-4">
+          {groups.length === 0 ? (
+            <div className="card p-8 text-center">
+              <p className="text-gray-500">Not enough assignment data to generate groups yet.</p>
+            </div>
+          ) : (
+            <>
+              <div className="card p-3 bg-blue-50 border-blue-200">
+                <p className="text-xs text-blue-700">
+                  These groupings are based on recent assignment performance. They are private to you
+                  and regenerated daily as new data comes in.
+                </p>
+              </div>
+              {groups.map((group) => (
+                <div key={group.label} className="card">
+                  <div className="card-header">
+                    <h3 className="text-sm font-medium text-gray-900">{group.label}</h3>
+                  </div>
+                  <div className="card-body">
+                    <p className="text-sm text-gray-600 mb-3">{group.recommendation}</p>
+                    <div className="flex flex-wrap gap-2">
+                      {group.students.map((s) => (
+                        <Link
+                          key={s.studentId}
+                          to={`/students/${s.studentId}`}
+                          className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 rounded-lg hover:bg-blue-50 text-sm"
+                        >
+                          <span className="font-medium">{s.firstName} {s.lastName}</span>
+                          <span className={`text-xs ${s.avgScore < 50 ? 'text-red-500' : s.avgScore < 75 ? 'text-amber-500' : 'text-green-500'}`}>
+                            {s.avgScore}%
+                          </span>
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </>
+          )}
+        </div>
+      )}
+
       {tab === 'seating' && (
         <div className="card p-6">
           {seats.length > 0 ? (
@@ -208,9 +271,9 @@ export function SectionPage() {
                   key={`${seat.row}-${seat.col}`}
                   className={`p-3 rounded-lg border-2 text-center text-xs ${
                     seat.student
-                      ? seat.student.riskTier === 'URGENT'
+                      ? seat.student.riskTier === 'NEEDS_SUPPORT'
                         ? 'border-red-300 bg-red-50'
-                        : seat.student.riskTier === 'NEEDS_SUPPORT'
+                        : seat.student.riskTier === 'WATCH'
                         ? 'border-amber-300 bg-amber-50'
                         : 'border-green-300 bg-green-50'
                       : 'border-gray-200 bg-gray-50'
@@ -230,6 +293,79 @@ export function SectionPage() {
             <p className="text-gray-500 text-sm text-center py-8">
               No seating chart configured for this section.
             </p>
+          )}
+        </div>
+      )}
+
+      {tab === 'substitute' && (
+        <div className="space-y-4">
+          {!subBrief ? (
+            <div className="card p-8 text-center">
+              <p className="text-gray-500">Loading substitute brief...</p>
+            </div>
+          ) : (
+            <>
+              <div className="card p-3 bg-amber-50 border-amber-200">
+                <p className="text-xs text-amber-700">
+                  This brief contains only the operational minimum a substitute needs.
+                  No grades, risk scores, attendance data, or parent information is included.
+                </p>
+              </div>
+              <div className="card">
+                <div className="card-header flex items-center justify-between">
+                  <div>
+                    <h3 className="text-sm font-medium text-gray-900">
+                      {subBrief.section.courseName} — {subBrief.section.period}
+                    </h3>
+                    {subBrief.section.room && (
+                      <p className="text-xs text-gray-500">Room {subBrief.section.room}</p>
+                    )}
+                  </div>
+                  <button
+                    onClick={() => window.print()}
+                    className="btn-secondary text-xs"
+                  >
+                    Print
+                  </button>
+                </div>
+                <div className="card-body">
+                  <table className="min-w-full text-sm">
+                    <thead>
+                      <tr className="text-xs text-gray-500 uppercase">
+                        <th className="text-left py-2">Student</th>
+                        <th className="text-left py-2">Seat</th>
+                        <th className="text-left py-2">Accommodations</th>
+                        <th className="text-left py-2">Interventions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {subBrief.students.map((s, i) => (
+                        <tr key={i}>
+                          <td className="py-2 font-medium text-gray-900">
+                            {s.firstName} {s.lastName}
+                          </td>
+                          <td className="py-2 text-gray-600">{s.seatLabel || '--'}</td>
+                          <td className="py-2">
+                            {s.accommodationNotes ? (
+                              <span className="text-purple-700 text-xs">{s.accommodationNotes}</span>
+                            ) : (
+                              <span className="text-gray-300">--</span>
+                            )}
+                          </td>
+                          <td className="py-2">
+                            {s.interventionNotes ? (
+                              <span className="text-blue-700 text-xs">{s.interventionNotes}</span>
+                            ) : (
+                              <span className="text-gray-300">--</span>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </>
           )}
         </div>
       )}

@@ -36,6 +36,8 @@ export function AppLayout() {
   const navItems = [
     { path: '/briefing', label: 'Morning Briefing', icon: '☀' },
     { path: '/roster', label: 'My Students', icon: '👥' },
+    { path: '/communication', label: 'Communication', icon: '✉' },
+    { path: '/insights', label: 'My Insights', icon: '📊' },
   ];
 
   const isActive = (path: string) => location.pathname === path;

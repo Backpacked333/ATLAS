@@ -9,6 +9,7 @@ import {
   InterventionTask,
   AccommodationAlert,
   NewStudent,
+  RelationshipMonitorEntry,
 } from '../types';
 
 export async function getMorningBriefing(teacherId: string): Promise<MorningBriefing> {
@@ -16,7 +17,7 @@ export async function getMorningBriefing(teacherId: string): Promise<MorningBrie
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  const [absentToday, gradeAlerts, missingWorkQueue, interventionTasks, accommodationAlerts, newStudents] =
+  const [absentToday, gradeAlerts, missingWorkQueue, interventionTasks, accommodationAlerts, newStudents, relationshipMonitor] =
     await Promise.all([
       getAbsentStudents(studentIds, today),
       getGradeAlerts(teacherId, studentIds),
@@ -24,6 +25,7 @@ export async function getMorningBriefing(teacherId: string): Promise<MorningBrie
       getInterventionTasks(teacherId, today),
       getAccommodationAlerts(teacherId, studentIds),
       getNewStudents(teacherId),
+      getRelationshipMonitor(teacherId, studentIds),
     ]);
 
   return {
@@ -33,6 +35,7 @@ export async function getMorningBriefing(teacherId: string): Promise<MorningBrie
     interventionTasks,
     accommodationAlerts,
     newStudents,
+    relationshipMonitor,
   };
 }
 
@@ -414,4 +417,77 @@ async function getNewStudents(teacherId: string): Promise<NewStudent[]> {
     priorGpa: e.student.cumulativeGpa,
     addedDate: e.enrollDate.toISOString().split('T')[0],
   }));
+}
+
+/**
+ * Student Relationship Monitor (Section 4.1.6)
+ * Shows students the teacher hasn't had a documented positive interaction
+ * with in 14+ days. Private, non-evaluative nudge.
+ */
+async function getRelationshipMonitor(
+  teacherId: string,
+  studentIds: string[]
+): Promise<RelationshipMonitorEntry[]> {
+  const fourteenDaysAgo = new Date();
+  fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14);
+
+  // Get the most recent positive interaction per student
+  // Positive interactions = observations with POSITIVE severity/category,
+  // parent contacts, or intervention check-in logs
+  const students = await prisma.student.findMany({
+    where: { id: { in: studentIds } },
+    select: {
+      id: true,
+      firstName: true,
+      lastName: true,
+      photoUrl: true,
+      observations: {
+        where: {
+          teacherId,
+          OR: [
+            { severity: 'POSITIVE' },
+            { category: 'POSITIVE' },
+          ],
+        },
+        orderBy: { createdAt: 'desc' },
+        take: 1,
+        select: { createdAt: true },
+      },
+      parentContacts: {
+        where: { teacherId },
+        orderBy: { createdAt: 'desc' },
+        take: 1,
+        select: { createdAt: true },
+      },
+    },
+  });
+
+  const entries: RelationshipMonitorEntry[] = [];
+
+  for (const student of students) {
+    const lastPositiveObsDate = student.observations[0]?.createdAt;
+    const lastContactDate = student.parentContacts[0]?.createdAt;
+
+    // Find the most recent positive interaction
+    const dates = [lastPositiveObsDate, lastContactDate].filter(Boolean) as Date[];
+    const mostRecent = dates.length > 0 ? new Date(Math.max(...dates.map((d) => d.getTime()))) : null;
+
+    if (!mostRecent || mostRecent < fourteenDaysAgo) {
+      const daysSince = mostRecent
+        ? Math.floor((Date.now() - mostRecent.getTime()) / (1000 * 60 * 60 * 24))
+        : 999;
+
+      entries.push({
+        studentId: student.id,
+        firstName: student.firstName,
+        lastName: student.lastName,
+        photoUrl: student.photoUrl,
+        daysSincePositiveInteraction: daysSince,
+      });
+    }
+  }
+
+  // Sort by longest gap
+  entries.sort((a, b) => b.daysSincePositiveInteraction - a.daysSincePositiveInteraction);
+  return entries;
 }

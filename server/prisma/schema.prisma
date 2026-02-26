@@ -153,9 +153,9 @@ model Student {
 }
 
 enum RiskTier {
-  ON_TRACK
-  NEEDS_SUPPORT
-  URGENT
+  ON_TRACK       // 0.00-0.30
+  WATCH          // 0.31-0.55
+  NEEDS_SUPPORT  // 0.56-1.00
 }
 
 model Guardian {
@@ -331,7 +331,7 @@ enum ObservationCategory {
   BEHAVIORAL
   SOCIAL_EMOTIONAL
   ATTENDANCE
-  OTHER
+  POSITIVE
 }
 
 enum ObservationSeverity {
@@ -455,6 +455,7 @@ model ParentContact {
   method     ContactMethod
   subject    String
   notes      String
+  sentiment  ContactSentiment @default(NEUTRAL) // positive, neutral, concern
   createdAt  DateTime      @default(now())
 
   student  Student   @relation(fields: [studentId], references: [id])
@@ -463,6 +464,12 @@ model ParentContact {
 
   @@index([studentId])
   @@index([teacherId])
+}
+
+enum ContactSentiment {
+  POSITIVE
+  NEUTRAL
+  CONCERN
 }
 
 enum ContactMethod {

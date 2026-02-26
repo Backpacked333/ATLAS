@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
 import { api } from '../services/api';
 import { MorningBriefing } from '../types';
 import { AbsentStudentsList } from '../components/briefing/AbsentStudentsList';
@@ -8,6 +7,7 @@ import { MissingWorkList } from '../components/briefing/MissingWorkList';
 import { InterventionTasksList } from '../components/briefing/InterventionTasksList';
 import { AccommodationAlertsList } from '../components/briefing/AccommodationAlertsList';
 import { NewStudentsList } from '../components/briefing/NewStudentsList';
+import { RelationshipMonitor } from '../components/briefing/RelationshipMonitor';
 
 export function BriefingPage() {
   const [briefing, setBriefing] = useState<MorningBriefing | null>(null);
@@ -76,6 +76,9 @@ export function BriefingPage() {
         <InterventionTasksList tasks={briefing.interventionTasks} />
         <AccommodationAlertsList alerts={briefing.accommodationAlerts} />
         <NewStudentsList students={briefing.newStudents} />
+        {briefing.relationshipMonitor.length > 0 && (
+          <RelationshipMonitor entries={briefing.relationshipMonitor} />
+        )}
       </div>
     </div>
   );

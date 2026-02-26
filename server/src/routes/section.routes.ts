@@ -3,6 +3,7 @@ import { AuthenticatedRequest } from '../types';
 import { authenticateTeacher } from '../middleware/auth';
 import { verifySectionAccess } from '../middleware/ferpa';
 import { getSectionSummary } from '../services/section.service';
+import { getSmartGroups } from '../services/grouping.service';
 import { prisma } from '../utils/prisma';
 
 const router = Router();
@@ -97,6 +98,25 @@ router.get(
           student: seat.studentId ? studentMap.get(seat.studentId) || null : null,
         }))
       );
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+/**
+ * GET /api/sections/:sectionId/groups
+ * Smart Grouping Engine (Section 4.4.4)
+ * Recommends flexible student groupings based on recent performance.
+ */
+router.get(
+  '/:sectionId/groups',
+  authenticateTeacher,
+  verifySectionAccess,
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    try {
+      const groups = await getSmartGroups(req.teacher!.id, req.params.sectionId as string);
+      res.json(groups);
     } catch (error) {
       next(error);
     }

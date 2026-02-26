@@ -7,7 +7,7 @@ import { ValidationError } from '../utils/errors';
 
 const router = Router();
 
-const VALID_CATEGORIES = ['ACADEMIC', 'BEHAVIORAL', 'SOCIAL_EMOTIONAL', 'ATTENDANCE', 'OTHER'];
+const VALID_CATEGORIES = ['ACADEMIC', 'BEHAVIORAL', 'SOCIAL_EMOTIONAL', 'ATTENDANCE', 'POSITIVE'];
 const VALID_SEVERITIES = ['POSITIVE', 'CONCERN', 'URGENT'];
 
 /**
