@@ -410,6 +410,87 @@ async function main() {
     },
   });
 
+  // ─── Action Items (demo data showing full lifecycle) ──────────────
+  const fiveDaysAgo = new Date(today);
+  fiveDaysAgo.setDate(fiveDaysAgo.getDate() - 5);
+  const threeDaysAgo = new Date(today);
+  threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
+  const twoDaysAgo = new Date(today);
+  twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
+
+  // Completed + reviewed (IMPROVED) — shows in outcomes
+  await prisma.actionItem.create({
+    data: {
+      teacherId: teacher.id,
+      studentId: students[6].id, // Liam Brown
+      triggerType: 'GRADE_ALERT',
+      title: "Address Liam's grade drop in Algebra I",
+      suggestedAction: 'Check in on grade drop',
+      status: 'COMPLETED',
+      completedAt: fiveDaysAgo,
+      actionTaken: '1on1_conference',
+      completionNotes: 'Had a 10-minute conference. Liam missed key concepts from Chapter 9. Scheduled tutoring.',
+      reviewAfterDays: 3,
+      reviewDueAt: twoDaysAgo,
+      outcomeStatus: 'IMPROVED',
+      outcomeNotes: 'Liam scored 85% on the makeup quiz after tutoring. Much better engagement in class.',
+      outcomeReviewedAt: new Date(today),
+    },
+  });
+
+  // Completed but review still pending (review due now)
+  await prisma.actionItem.create({
+    data: {
+      teacherId: teacher.id,
+      studentId: students[10].id, // Ethan Miller
+      triggerType: 'MISSING_WORK',
+      triggerRef: 'Chapter 10 HW',
+      title: "Follow up on Ethan's missing Chapter 10 HW",
+      suggestedAction: 'Follow up on missing work',
+      status: 'COMPLETED',
+      completedAt: threeDaysAgo,
+      actionTaken: 'new_deadline',
+      completionNotes: 'Extended deadline by 3 days. Ethan said he was confused about the format.',
+      reviewAfterDays: 3,
+      reviewDueAt: today,
+      outcomeStatus: 'PENDING',
+    },
+  });
+
+  // Pending action (not yet taken)
+  await prisma.actionItem.create({
+    data: {
+      teacherId: teacher.id,
+      studentId: sofia.id,
+      triggerType: 'ACCOMMODATION',
+      triggerRef: 'Unit 5 Quiz',
+      title: "Prepare accommodations for Sofia's Unit 5 Quiz",
+      suggestedAction: 'Confirm accommodations are ready',
+      status: 'PENDING',
+      reviewAfterDays: 3,
+    },
+  });
+
+  // Another completed + reviewed (NO_CHANGE)
+  await prisma.actionItem.create({
+    data: {
+      teacherId: teacher.id,
+      studentId: jamesStudent.id,
+      triggerType: 'ABSENT',
+      title: "Check in on James's absences (3 days)",
+      suggestedAction: 'Reach out about absences',
+      status: 'COMPLETED',
+      completedAt: fiveDaysAgo,
+      actionTaken: 'called_home',
+      completionNotes: 'Spoke with mom. Family situation ongoing. Will monitor.',
+      reviewAfterDays: 3,
+      reviewDueAt: twoDaysAgo,
+      outcomeStatus: 'NO_CHANGE',
+      outcomeNotes: 'James still absent. Will escalate to counselor.',
+      outcomeReviewedAt: new Date(today),
+    },
+  });
+
   console.log('Seed completed successfully!');
   console.log(`Created: 1 district, 1 school, 1 teacher, 3 sections, ${students.length} students`);
   console.log('Login with: teacher@demo.edu');

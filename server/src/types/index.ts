@@ -236,6 +236,65 @@ export interface AIAssistantRequest {
   conversationId?: string;
 }
 
+// ─── Action Items (Closed-Loop Tracking) ─────────────────────────────
+
+export type ActionTrigger = 'ABSENT' | 'GRADE_ALERT' | 'MISSING_WORK' | 'INTERVENTION' | 'ACCOMMODATION' | 'NEW_STUDENT' | 'RELATIONSHIP';
+export type ActionStatus = 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'DISMISSED';
+export type OutcomeStatus = 'PENDING' | 'IMPROVED' | 'NO_CHANGE' | 'WORSENED' | 'NOT_APPLICABLE';
+
+export interface ActionItemView {
+  id: string;
+  studentId: string;
+  firstName: string;
+  lastName: string;
+  photoUrl: string | null;
+  triggerType: ActionTrigger;
+  triggerRef: string | null;
+  title: string;
+  suggestedAction: string;
+  status: ActionStatus;
+  completedAt: string | null;
+  completionNotes: string | null;
+  actionTaken: string | null;
+  reviewAfterDays: number;
+  reviewDueAt: string | null;
+  outcomeStatus: OutcomeStatus;
+  outcomeNotes: string | null;
+  outcomeReviewedAt: string | null;
+  createdAt: string;
+}
+
+export interface CreateActionItemInput {
+  studentId: string;
+  triggerType: ActionTrigger;
+  triggerRef?: string;
+  title: string;
+  suggestedAction: string;
+  reviewAfterDays?: number;
+}
+
+export interface CompleteActionItemInput {
+  actionTaken: string;
+  completionNotes: string;
+}
+
+export interface ReviewOutcomeInput {
+  outcomeStatus: 'IMPROVED' | 'NO_CHANGE' | 'WORSENED' | 'NOT_APPLICABLE';
+  outcomeNotes: string;
+}
+
+export interface ActionItemDashboard {
+  pendingActions: ActionItemView[];
+  pendingReviews: ActionItemView[];
+  recentOutcomes: ActionItemView[];
+  stats: {
+    totalOpen: number;
+    completedThisWeek: number;
+    pendingReviewCount: number;
+    improvedRate: number;
+  };
+}
+
 // ─── Communication Suite ──────────────────────────────────────────────
 
 export interface CreateParentContactInput {

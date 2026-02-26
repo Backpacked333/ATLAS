@@ -35,6 +35,7 @@ export function AppLayout() {
 
   const navItems = [
     { path: '/briefing', label: 'Morning Briefing', icon: '☀' },
+    { path: '/actions', label: 'Action Items', icon: '☑' },
     { path: '/roster', label: 'My Students', icon: '👥' },
     { path: '/communication', label: 'Communication', icon: '✉' },
     { path: '/insights', label: 'My Insights', icon: '📊' },

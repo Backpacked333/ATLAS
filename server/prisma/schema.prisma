@@ -58,6 +58,7 @@ model Teacher {
   parentContacts     ParentContact[]
   notifications      Notification[]
   aiConversations    AIConversation[]
+  actionItems        ActionItem[]
 
   @@index([schoolId])
   @@index([email])
@@ -146,6 +147,7 @@ model Student {
   grades             Grade[]
   guardians          Guardian[]
   notifications      Notification[]
+  actionItems        ActionItem[]
 
   @@index([schoolId])
   @@index([studentIdNo])
@@ -531,6 +533,67 @@ enum NotificationChannel {
   IN_APP
   EMAIL
   BOTH
+}
+
+// ─── Action Items (Closed-Loop Tracking) ─────────────────────────────
+
+model ActionItem {
+  id          String           @id @default(cuid())
+  teacherId   String
+  studentId   String
+  triggerType ActionTrigger    // What surfaced this action (absent, grade_alert, etc.)
+  triggerRef  String?          // Optional reference ID (e.g. interventionId, assignmentId)
+  title       String           // Short description: "Check in with James about absences"
+  suggestedAction String       // System-suggested action text
+  status      ActionStatus     @default(PENDING)
+
+  // Completion tracking
+  completedAt   DateTime?
+  completionNotes String?      // What the teacher actually did
+  actionTaken     String?      // The specific action: "called_home", "1on1_talk", "schedule_tutoring", etc.
+
+  // Outcome review (follow-up check)
+  reviewAfterDays Int          @default(3)  // Days to wait before prompting outcome review
+  reviewDueAt     DateTime?    // Computed: completedAt + reviewAfterDays
+  outcomeStatus   OutcomeStatus @default(PENDING)
+  outcomeNotes    String?      // What happened? Did it help?
+  outcomeReviewedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  teacher Teacher @relation(fields: [teacherId], references: [id])
+  student Student @relation(fields: [studentId], references: [id])
+
+  @@index([teacherId, status])
+  @@index([teacherId, outcomeStatus])
+  @@index([studentId])
+  @@index([reviewDueAt])
+}
+
+enum ActionTrigger {
+  ABSENT
+  GRADE_ALERT
+  MISSING_WORK
+  INTERVENTION
+  ACCOMMODATION
+  NEW_STUDENT
+  RELATIONSHIP
+}
+
+enum ActionStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  DISMISSED
+}
+
+enum OutcomeStatus {
+  PENDING       // Not yet reviewed (either action not done, or waiting for review period)
+  IMPROVED
+  NO_CHANGE
+  WORSENED
+  NOT_APPLICABLE
 }
 
 // ─── AI Conversations ─────────────────────────────────────────────────

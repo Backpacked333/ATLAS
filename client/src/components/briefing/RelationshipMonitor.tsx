@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { RelationshipMonitorEntry } from '../../types';
+import { ActionButton } from '../actions/ActionButton';
 
 interface Props {
   entries: RelationshipMonitorEntry[];
@@ -24,27 +25,44 @@ export function RelationshipMonitor({ entries }: Props) {
           {entries.length} student{entries.length !== 1 ? 's' : ''} haven't heard from you recently.
           A quick positive interaction can make a big difference.
         </p>
-        <div className="flex flex-wrap gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {entries.map((entry) => (
-            <Link
-              key={entry.studentId}
-              to={`/students/${entry.studentId}`}
-              className="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 hover:bg-blue-50 transition-colors"
-            >
-              <div className="h-7 w-7 rounded-full bg-gray-200 flex items-center justify-center text-xs font-medium">
-                {entry.firstName[0]}{entry.lastName[0]}
-              </div>
-              <div>
-                <p className="text-sm font-medium text-gray-900">
-                  {entry.firstName} {entry.lastName}
-                </p>
-                <p className="text-xs text-gray-500">
-                  {entry.daysSincePositiveInteraction >= 999
-                    ? 'No positive interactions logged'
-                    : `${entry.daysSincePositiveInteraction} days`}
-                </p>
-              </div>
-            </Link>
+            <div key={entry.studentId} className="px-3 py-2 rounded-lg bg-gray-50">
+              <Link
+                to={`/students/${entry.studentId}`}
+                className="flex items-center gap-2 hover:bg-blue-50 rounded transition-colors"
+              >
+                <div className="h-7 w-7 rounded-full bg-gray-200 flex items-center justify-center text-xs font-medium">
+                  {entry.firstName[0]}{entry.lastName[0]}
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-900">
+                    {entry.firstName} {entry.lastName}
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    {entry.daysSincePositiveInteraction >= 999
+                      ? 'No positive interactions logged'
+                      : `${entry.daysSincePositiveInteraction} days`}
+                  </p>
+                </div>
+              </Link>
+              <ActionButton
+                suggestion={{
+                  studentId: entry.studentId,
+                  triggerType: 'RELATIONSHIP',
+                  title: `Reconnect with ${entry.firstName} (${entry.daysSincePositiveInteraction >= 999 ? 'no recent contact' : entry.daysSincePositiveInteraction + ' days'})`,
+                  suggestedAction: 'Have a positive interaction',
+                  actionOptions: [
+                    { value: 'positive_comment', label: 'Made a positive comment in class' },
+                    { value: 'check_in_chat', label: 'Had a quick check-in chat' },
+                    { value: 'positive_note_home', label: 'Sent positive note home' },
+                    { value: 'lunch_visit', label: 'Invited to lunch/office hours' },
+                    { value: 'public_praise', label: 'Gave public recognition' },
+                    { value: 'other', label: 'Other' },
+                  ],
+                }}
+              />
+            </div>
           ))}
         </div>
       </div>

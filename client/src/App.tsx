@@ -10,6 +10,7 @@ import { ReferralPage } from './pages/ReferralPage';
 import { NotificationsPage } from './pages/NotificationsPage';
 import { CommunicationPage } from './pages/CommunicationPage';
 import { InsightsPage } from './pages/InsightsPage';
+import { ActionItemsPage } from './pages/ActionItemsPage';
 
 export default function App() {
   return (
@@ -26,6 +27,7 @@ export default function App() {
           <Route path="/notifications" element={<NotificationsPage />} />
           <Route path="/communication" element={<CommunicationPage />} />
           <Route path="/insights" element={<InsightsPage />} />
+          <Route path="/actions" element={<ActionItemsPage />} />
         </Route>
       </Routes>
     </AuthProvider>
