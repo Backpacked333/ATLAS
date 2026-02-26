@@ -1,0 +1,553 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Districts & Schools ───────────────────────────────────────────────
+
+model District {
+  id        String   @id @default(cuid())
+  name      String
+  state     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  schools School[]
+}
+
+model School {
+  id         String   @id @default(cuid())
+  districtId String
+  name       String
+  gradeSpan  String   // e.g. "K-5", "6-8", "9-12"
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  district      District       @relation(fields: [districtId], references: [id])
+  teachers      Teacher[]
+  students      Student[]
+  sections      Section[]
+  counselors    Counselor[]
+  notifications Notification[]
+
+  @@index([districtId])
+}
+
+// ─── Users ─────────────────────────────────────────────────────────────
+
+model Teacher {
+  id            String   @id @default(cuid())
+  schoolId      String
+  email         String   @unique
+  firstName     String
+  lastName      String
+  ssoProviderId String?  @unique // External SSO identifier
+  photoUrl      String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  school             School              @relation(fields: [schoolId], references: [id])
+  sections           TeacherSection[]
+  observations       Observation[]
+  interventionLogs   InterventionLog[]
+  referrals          SSTReferral[]
+  parentContacts     ParentContact[]
+  notifications      Notification[]
+  aiConversations    AIConversation[]
+
+  @@index([schoolId])
+  @@index([email])
+}
+
+model Counselor {
+  id            String   @id @default(cuid())
+  schoolId      String
+  email         String   @unique
+  firstName     String
+  lastName      String
+  ssoProviderId String?  @unique
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  school   School        @relation(fields: [schoolId], references: [id])
+  referrals SSTReferral[]
+
+  @@index([schoolId])
+}
+
+// ─── Academic Structure ────────────────────────────────────────────────
+
+model Section {
+  id         String   @id @default(cuid())
+  schoolId   String
+  courseName String   // e.g. "Algebra I"
+  period     String   // e.g. "P3"
+  semester   String   // e.g. "2025-26 S2"
+  room       String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  school      School            @relation(fields: [schoolId], references: [id])
+  teachers    TeacherSection[]
+  enrollments Enrollment[]
+  assignments Assignment[]
+  seats       SeatAssignment[]
+
+  @@index([schoolId])
+}
+
+model TeacherSection {
+  id        String @id @default(cuid())
+  teacherId String
+  sectionId String
+  role      String @default("primary") // primary, co-teacher
+
+  teacher Teacher @relation(fields: [teacherId], references: [id])
+  section Section @relation(fields: [sectionId], references: [id])
+
+  @@unique([teacherId, sectionId])
+  @@index([teacherId])
+  @@index([sectionId])
+}
+
+// ─── Students ──────────────────────────────────────────────────────────
+
+model Student {
+  id          String   @id @default(cuid())
+  schoolId    String
+  studentIdNo String   @unique // District student ID number
+  firstName   String
+  lastName    String
+  gradeLevel  Int      // K=0, 1-12
+  photoUrl    String?
+  ellStatus   Boolean  @default(false)
+  iepActive   Boolean  @default(false)
+  has504      Boolean  @default(false)
+  cumulativeGpa Float? // Overall GPA (0.0-4.0)
+  totalCredits  Float? // Credits earned
+  creditsRequired Float? // Credits needed to be on-track
+  riskTier    RiskTier @default(ON_TRACK) // Teacher-visible qualitative label
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  school             School              @relation(fields: [schoolId], references: [id])
+  enrollments        Enrollment[]
+  attendanceRecords  AttendanceRecord[]
+  assessmentScores   AssessmentScore[]
+  accommodations     Accommodation[]
+  observations       Observation[]
+  interventions      Intervention[]
+  referrals          SSTReferral[]
+  parentContacts     ParentContact[]
+  grades             Grade[]
+  guardians          Guardian[]
+  notifications      Notification[]
+
+  @@index([schoolId])
+  @@index([studentIdNo])
+  @@index([lastName, firstName])
+}
+
+enum RiskTier {
+  ON_TRACK
+  NEEDS_SUPPORT
+  URGENT
+}
+
+model Guardian {
+  id        String  @id @default(cuid())
+  studentId String
+  firstName String
+  lastName  String
+  email     String?
+  phone     String?
+  relation  String  // e.g. "Mother", "Father", "Guardian"
+  isPrimary Boolean @default(false)
+
+  student        Student         @relation(fields: [studentId], references: [id])
+  parentContacts ParentContact[]
+
+  @@index([studentId])
+}
+
+model Enrollment {
+  id        String   @id @default(cuid())
+  studentId String
+  sectionId String
+  status    EnrollmentStatus @default(ACTIVE)
+  enrollDate DateTime @default(now())
+  dropDate   DateTime?
+
+  student Student @relation(fields: [studentId], references: [id])
+  section Section @relation(fields: [sectionId], references: [id])
+
+  @@unique([studentId, sectionId])
+  @@index([studentId])
+  @@index([sectionId])
+  @@index([status])
+}
+
+enum EnrollmentStatus {
+  ACTIVE
+  DROPPED
+  TRANSFERRED
+}
+
+// ─── Grades & Assignments ──────────────────────────────────────────────
+
+model Assignment {
+  id          String   @id @default(cuid())
+  sectionId   String
+  name        String
+  category    String   // e.g. "Homework", "Test", "Quiz", "Project"
+  pointsPossible Float
+  dueDate     DateTime
+  createdAt   DateTime @default(now())
+
+  section Section @relation(fields: [sectionId], references: [id])
+  grades  Grade[]
+
+  @@index([sectionId])
+  @@index([dueDate])
+}
+
+model Grade {
+  id           String    @id @default(cuid())
+  studentId    String
+  assignmentId String
+  pointsEarned Float?    // null = missing/not submitted
+  isMissing    Boolean   @default(false)
+  isLate       Boolean   @default(false)
+  submittedAt  DateTime?
+  gradedAt     DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  student    Student    @relation(fields: [studentId], references: [id])
+  assignment Assignment @relation(fields: [assignmentId], references: [id])
+
+  @@unique([studentId, assignmentId])
+  @@index([studentId])
+  @@index([assignmentId])
+}
+
+// ─── Attendance ────────────────────────────────────────────────────────
+
+model AttendanceRecord {
+  id        String           @id @default(cuid())
+  studentId String
+  date      DateTime         @db.Date
+  period    String?          // null = whole-day, "P3" = period-specific
+  status    AttendanceStatus
+  createdAt DateTime         @default(now())
+
+  student Student @relation(fields: [studentId], references: [id])
+
+  @@unique([studentId, date, period])
+  @@index([studentId, date])
+  @@index([date])
+}
+
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  TARDY
+  EXCUSED
+}
+
+// ─── Assessments ───────────────────────────────────────────────────────
+
+model AssessmentScore {
+  id             String   @id @default(cuid())
+  studentId      String
+  assessmentName String   // e.g. "MAP Reading Fall 2025"
+  assessmentType String   // e.g. "MAP", "SBAC", "Illuminate"
+  subject        String   // e.g. "Reading", "Math"
+  score          Float
+  percentile     Int?
+  performanceLevel String? // e.g. "Met Standard", "Below Standard"
+  testDate       DateTime
+  createdAt      DateTime @default(now())
+
+  student Student @relation(fields: [studentId], references: [id])
+
+  @@index([studentId])
+  @@index([assessmentType, subject])
+}
+
+// ─── Accommodations (504 / IEP) ───────────────────────────────────────
+
+model Accommodation {
+  id          String @id @default(cuid())
+  studentId   String
+  type        AccommodationType
+  description String   // e.g. "Extended time 1.5x on all assessments"
+  category    String   // e.g. "Testing", "Classroom", "Behavioral"
+  isActive    Boolean  @default(true)
+  startDate   DateTime
+  endDate     DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  student Student @relation(fields: [studentId], references: [id])
+
+  @@index([studentId])
+  @@index([type, isActive])
+}
+
+enum AccommodationType {
+  IEP
+  PLAN_504
+}
+
+// ─── Observations (Teacher Notes) ──────────────────────────────────────
+
+model Observation {
+  id        String              @id @default(cuid())
+  studentId String
+  teacherId String
+  category  ObservationCategory
+  severity  ObservationSeverity
+  content   String
+  isEditable Boolean            @default(true) // Locked after 24h
+  createdAt  DateTime           @default(now())
+  updatedAt  DateTime           @updatedAt
+
+  student Student @relation(fields: [studentId], references: [id])
+  teacher Teacher @relation(fields: [teacherId], references: [id])
+
+  @@index([studentId])
+  @@index([teacherId])
+  @@index([createdAt])
+  @@index([severity])
+}
+
+enum ObservationCategory {
+  ACADEMIC
+  BEHAVIORAL
+  SOCIAL_EMOTIONAL
+  ATTENDANCE
+  OTHER
+}
+
+enum ObservationSeverity {
+  POSITIVE
+  CONCERN
+  URGENT
+}
+
+// ─── Interventions ─────────────────────────────────────────────────────
+
+model Intervention {
+  id           String             @id @default(cuid())
+  studentId    String
+  tier         InterventionTier
+  type         String             // e.g. "Daily Check-In", "Tutoring Referral"
+  description  String
+  teacherRole  String?            // What the teacher specifically does
+  startDate    DateTime
+  endDate      DateTime?
+  status       InterventionStatus @default(ACTIVE)
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+
+  student Student           @relation(fields: [studentId], references: [id])
+  logs    InterventionLog[]
+
+  @@index([studentId])
+  @@index([status])
+}
+
+enum InterventionTier {
+  TIER_1
+  TIER_2
+  TIER_3
+}
+
+enum InterventionStatus {
+  ACTIVE
+  COMPLETED
+  DISCONTINUED
+}
+
+model InterventionLog {
+  id              String                @id @default(cuid())
+  interventionId  String
+  teacherId       String
+  date            DateTime              @db.Date
+  completionStatus InterventionLogStatus
+  notes           String?
+  createdAt       DateTime              @default(now())
+
+  intervention Intervention @relation(fields: [interventionId], references: [id])
+  teacher      Teacher      @relation(fields: [teacherId], references: [id])
+
+  @@unique([interventionId, teacherId, date])
+  @@index([interventionId])
+  @@index([teacherId, date])
+}
+
+enum InterventionLogStatus {
+  COMPLETED
+  PARTIALLY_COMPLETED
+  NOT_COMPLETED
+}
+
+// ─── SST Referrals ─────────────────────────────────────────────────────
+
+model SSTReferral {
+  id                String          @id @default(cuid())
+  studentId         String
+  referringTeacherId String
+  assignedCounselorId String?
+  primaryConcern    ConcernType
+  narrative         String          // Teacher's description (2-3 sentences, max 500 words)
+  strategiesAttempted Json           // Array of { strategy: string, date: string }
+  urgency           ReferralUrgency
+  status            ReferralStatus  @default(PENDING)
+  meetingTime       DateTime?
+  resolution        String?
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  student    Student    @relation(fields: [studentId], references: [id])
+  teacher    Teacher    @relation(fields: [referringTeacherId], references: [id])
+  counselor  Counselor? @relation(fields: [assignedCounselorId], references: [id])
+
+  @@index([studentId])
+  @@index([referringTeacherId])
+  @@index([assignedCounselorId])
+  @@index([status])
+}
+
+enum ConcernType {
+  ACADEMIC
+  BEHAVIORAL
+  ATTENDANCE
+  SOCIAL_EMOTIONAL
+  OTHER
+}
+
+enum ReferralUrgency {
+  STANDARD  // Review within 5 school days
+  URGENT    // Review within 24 hours
+}
+
+enum ReferralStatus {
+  PENDING
+  IN_REVIEW
+  MEETING_SCHEDULED
+  RESOLVED
+  CLOSED
+}
+
+// ─── Parent Contact Log ───────────────────────────────────────────────
+
+model ParentContact {
+  id         String        @id @default(cuid())
+  studentId  String
+  teacherId  String
+  guardianId String?
+  method     ContactMethod
+  subject    String
+  notes      String
+  createdAt  DateTime      @default(now())
+
+  student  Student   @relation(fields: [studentId], references: [id])
+  teacher  Teacher   @relation(fields: [teacherId], references: [id])
+  guardian Guardian?  @relation(fields: [guardianId], references: [id])
+
+  @@index([studentId])
+  @@index([teacherId])
+}
+
+enum ContactMethod {
+  EMAIL
+  PHONE
+  IN_PERSON
+  OTHER
+}
+
+// ─── Seat Assignments ─────────────────────────────────────────────────
+
+model SeatAssignment {
+  id        String @id @default(cuid())
+  sectionId String
+  studentId String?
+  row       Int
+  col       Int
+  label     String? // Optional label like "A1"
+
+  section Section @relation(fields: [sectionId], references: [id])
+
+  @@unique([sectionId, row, col])
+  @@index([sectionId])
+}
+
+// ─── Notifications ────────────────────────────────────────────────────
+
+model Notification {
+  id        String             @id @default(cuid())
+  teacherId String?
+  schoolId  String?
+  studentId String?
+  type      NotificationType
+  title     String
+  body      String
+  isRead    Boolean            @default(false)
+  channel   NotificationChannel @default(IN_APP)
+  createdAt DateTime           @default(now())
+
+  teacher Teacher? @relation(fields: [teacherId], references: [id])
+  school  School?  @relation(fields: [schoolId], references: [id])
+  student Student? @relation(fields: [studentId], references: [id])
+
+  @@index([teacherId, isRead])
+  @@index([createdAt])
+}
+
+enum NotificationType {
+  ABSENT_STREAK
+  GRADE_DROP
+  INTERVENTION_ASSIGNED
+  INTERVENTION_OVERDUE
+  SST_MEETING_SCHEDULED
+  NEW_STUDENT
+  ACCOMMODATION_REMINDER
+}
+
+enum NotificationChannel {
+  IN_APP
+  EMAIL
+  BOTH
+}
+
+// ─── AI Conversations ─────────────────────────────────────────────────
+
+model AIConversation {
+  id        String   @id @default(cuid())
+  teacherId String
+  studentId String?  // Optional: if conversation is about a specific student
+  createdAt DateTime @default(now())
+
+  teacher  Teacher        @relation(fields: [teacherId], references: [id])
+  messages AIMessage[]
+
+  @@index([teacherId])
+}
+
+model AIMessage {
+  id             String   @id @default(cuid())
+  conversationId String
+  role           String   // "user" or "assistant"
+  content        String
+  createdAt      DateTime @default(now())
+
+  conversation AIConversation @relation(fields: [conversationId], references: [id])
+
+  @@index([conversationId])
+}
