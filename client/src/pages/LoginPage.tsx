@@ -29,6 +29,19 @@ export function LoginPage() {
     }
   }
 
+  async function handleDemoLogin() {
+    setError('');
+    setLoading(true);
+    try {
+      await login('teacher@demo.edu');
+      navigate('/briefing');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Login failed');
+    } finally {
+      setLoading(false);
+    }
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-atlas-background px-4">
       <div className="w-full max-w-sm">
@@ -40,7 +53,27 @@ export function LoginPage() {
           </p>
         </div>
 
+        {/* Demo Banner */}
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4 text-center">
+          <p className="text-sm font-medium text-blue-800 mb-2">
+            See it in action with sample data
+          </p>
+          <button
+            onClick={handleDemoLogin}
+            disabled={loading}
+            className="btn-primary w-full"
+          >
+            {loading ? 'Loading demo...' : 'Try the Demo'}
+          </button>
+          <p className="text-xs text-blue-600 mt-2">
+            Log in as Sarah Martinez, Algebra I & Geometry teacher
+          </p>
+        </div>
+
         <div className="card p-6">
+          <p className="text-xs text-gray-400 uppercase tracking-wider font-semibold mb-3">
+            Or sign in with your account
+          </p>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
@@ -64,7 +97,7 @@ export function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="btn-primary w-full"
+              className="btn-secondary w-full"
             >
               {loading ? 'Signing in...' : 'Sign In'}
             </button>
