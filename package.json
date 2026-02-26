@@ -4,6 +4,7 @@
   "description": "AtlasED Classroom — The daily operating system for classroom teachers",
   "private": true,
   "scripts": {
+    "postinstall": "cd server && npm install && cd ../client && npm install",
     "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
     "dev:server": "cd server && npm run dev",
     "dev:client": "cd client && npm run dev",
