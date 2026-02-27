@@ -45,7 +45,7 @@ export async function verifyStudentAccess(
       throw new ForbiddenError('Teacher context not available');
     }
 
-    if (!studentId) {
+    if (!studentId || typeof studentId !== 'string') {
       next();
       return;
     }
@@ -80,7 +80,7 @@ export async function verifySectionAccess(
       throw new ForbiddenError('Teacher context not available');
     }
 
-    if (!sectionId) {
+    if (!sectionId || typeof sectionId !== 'string') {
       next();
       return;
     }
