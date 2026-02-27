@@ -1,6 +1,8 @@
 import { Router, Response, NextFunction } from 'express';
 import { AuthenticatedRequest } from '../types';
 import { authenticateTeacher } from '../middleware/auth';
+import { teacherHasStudentAccess } from '../middleware/ferpa';
+import { ValidationError } from '../utils/errors';
 import {
   createActionItem,
   completeActionItem,
@@ -44,6 +46,18 @@ router.get('/student/:studentId', authenticateTeacher, async (req: Authenticated
  */
 router.post('/', authenticateTeacher, async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   try {
+    const { studentId } = req.body;
+
+    if (!studentId) {
+      throw new ValidationError('studentId is required');
+    }
+
+    // FERPA: Verify teacher has access to this student
+    const hasAccess = await teacherHasStudentAccess(req.teacher!.id, studentId);
+    if (!hasAccess) {
+      throw new ValidationError('You do not have access to this student');
+    }
+
     const item = await createActionItem(req.teacher!.id, req.body);
     res.status(201).json(item);
   } catch (error) {
