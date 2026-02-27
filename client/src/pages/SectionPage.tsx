@@ -11,6 +11,8 @@ export function SectionPage() {
   const [subBrief, setSubBrief] = useState<SubstituteBrief | null>(null);
   const [tab, setTab] = useState<'overview' | 'assignments' | 'seating' | 'grouping' | 'substitute'>('overview');
   const [loading, setLoading] = useState(true);
+  const [groupsError, setGroupsError] = useState<string | null>(null);
+  const [subBriefError, setSubBriefError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!sectionId) return;
@@ -93,14 +95,20 @@ export function SectionPage() {
               onClick={() => {
                 setTab(t);
                 if (t === 'grouping' && groups.length === 0 && sectionId) {
+                  setGroupsError(null);
                   api.get<SmartGroup[]>(`/sections/${sectionId}/groups`)
                     .then(setGroups)
-                    .catch(() => {});
+                    .catch((error) => {
+                      setGroupsError(error instanceof Error ? error.message : 'Failed to load smart groups');
+                    });
                 }
                 if (t === 'substitute' && !subBrief && sectionId) {
+                  setSubBriefError(null);
                   api.get<SubstituteBrief>(`/substitute/${sectionId}`)
                     .then(setSubBrief)
-                    .catch(() => {});
+                    .catch((error) => {
+                      setSubBriefError(error instanceof Error ? error.message : 'Failed to load substitute brief');
+                    });
                 }
               }}
               className={`pb-2 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
@@ -221,7 +229,12 @@ export function SectionPage() {
 
       {tab === 'grouping' && (
         <div className="space-y-4">
-          {groups.length === 0 ? (
+          {groupsError && (
+            <div className="card p-4 bg-red-50 border-red-200">
+              <p className="text-sm text-red-700">{groupsError}</p>
+            </div>
+          )}
+          {groups.length === 0 && !groupsError ? (
             <div className="card p-8 text-center">
               <p className="text-gray-500">Not enough assignment data to generate groups yet.</p>
             </div>
@@ -299,11 +312,16 @@ export function SectionPage() {
 
       {tab === 'substitute' && (
         <div className="space-y-4">
-          {!subBrief ? (
+          {subBriefError && (
+            <div className="card p-4 bg-red-50 border-red-200">
+              <p className="text-sm text-red-700">{subBriefError}</p>
+            </div>
+          )}
+          {!subBrief && !subBriefError ? (
             <div className="card p-8 text-center">
               <p className="text-gray-500">Loading substitute brief...</p>
             </div>
-          ) : (
+          ) : !subBrief && subBriefError ? null : (
             <>
               <div className="card p-3 bg-amber-50 border-amber-200">
                 <p className="text-xs text-amber-700">
