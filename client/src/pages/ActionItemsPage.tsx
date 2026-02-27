@@ -222,9 +222,9 @@ export function ActionItemsPage() {
 function StatCard({ label, value, color }: { label: string; value: number | string; color: string }) {
   return (
     <div className="card">
-      <div className="card-body text-center">
+      <div className="card-body">
         <p className={`text-2xl font-bold ${color}`}>{value}</p>
-        <p className="text-xs text-gray-500 mt-1">{label}</p>
+        <p className="text-xs text-gray-500 mt-0.5">{label}</p>
       </div>
     </div>
   );

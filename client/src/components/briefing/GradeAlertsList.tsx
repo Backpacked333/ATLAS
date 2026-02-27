@@ -10,7 +10,12 @@ export function GradeAlertsList({ alerts }: Props) {
   return (
     <div className="card">
       <div className="card-header flex items-center justify-between">
-        <h2 className="text-sm font-medium text-gray-900">Grade Alerts</h2>
+        <div className="flex items-center gap-2">
+          <div className="w-7 h-7 rounded-lg bg-amber-50 flex items-center justify-center text-amber-500">
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M2.25 6 9 12.75l4.286-4.286a11.948 11.948 0 0 1 4.306 6.43l.776 2.898m0 0 3.182-5.511m-3.182 5.51-5.511-3.181" /></svg>
+          </div>
+          <h2 className="text-sm font-semibold text-gray-900">Grade Alerts</h2>
+        </div>
         <span className={`badge ${alerts.length > 0 ? 'badge-amber' : 'badge-green'}`}>
           {alerts.length}
         </span>

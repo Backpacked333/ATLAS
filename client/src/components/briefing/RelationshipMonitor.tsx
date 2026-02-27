@@ -17,8 +17,13 @@ export function RelationshipMonitor({ entries }: Props) {
   return (
     <div className="card md:col-span-2">
       <div className="card-header flex items-center justify-between">
-        <h2 className="text-sm font-medium text-gray-900">Relationship Check-In</h2>
-        <span className="text-xs text-gray-400">Private — only visible to you</span>
+        <div className="flex items-center gap-2">
+          <div className="w-7 h-7 rounded-lg bg-pink-50 flex items-center justify-center text-pink-500">
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" /></svg>
+          </div>
+          <h2 className="text-sm font-semibold text-gray-900">Relationship Check-In</h2>
+        </div>
+        <span className="text-xs text-gray-400">Private</span>
       </div>
       <div className="card-body">
         <p className="text-sm text-gray-500 mb-3">

@@ -45,7 +45,7 @@ export function StudentProfilePage() {
       <div className="card p-4">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-4">
-            <div className="h-16 w-16 rounded-full bg-atlas-accent/20 flex items-center justify-center text-lg font-bold text-atlas-primary">
+            <div className="h-16 w-16 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-lg font-bold text-white shadow-lg shadow-blue-500/20">
               {profile.firstName[0]}{profile.lastName[0]}
             </div>
             <div>
