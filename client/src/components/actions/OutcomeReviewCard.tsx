@@ -29,19 +29,22 @@ export function OutcomeReviewCard({ item, onReviewed }: Props) {
   const [selectedOutcome, setSelectedOutcome] = useState<OutcomeStatus | ''>('');
   const [notes, setNotes] = useState('');
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string>('');
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!selectedOutcome || selectedOutcome === 'PENDING') return;
     setSaving(true);
+    setError('');
     try {
       const updated = await api.put<ActionItemView>(`/action-items/${item.id}/review`, {
         outcomeStatus: selectedOutcome,
         outcomeNotes: notes,
       });
       onReviewed(updated);
-    } catch {
-      // silently fail
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to submit review. Please try again.';
+      setError(message);
     } finally {
       setSaving(false);
     }
@@ -71,6 +74,12 @@ export function OutcomeReviewCard({ item, onReviewed }: Props) {
           <span className="font-medium">Action taken:</span> {item.actionTaken}
           {item.completionNotes && <span className="block mt-1 text-gray-500">"{item.completionNotes}"</span>}
         </div>
+
+        {error && (
+          <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded text-xs text-red-700">
+            {error}
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="mt-3 space-y-2">
           <p className="text-xs font-medium text-gray-700">Did this help?</p>
