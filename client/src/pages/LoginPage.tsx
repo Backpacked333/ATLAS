@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
 export function LoginPage() {
-  const { login, isAuthenticated } = useAuth();
+  const { login, demoLogin, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [error, setError] = useState('');
@@ -30,18 +30,8 @@ export function LoginPage() {
   }
 
   function handleDemoLogin() {
-    const demoUrl = import.meta.env.VITE_DEMO_URL;
-    if (demoUrl) {
-      window.location.href = demoUrl;
-      return;
-    }
-    // Fallback: attempt real API login (works in local dev with server running)
-    setError('');
-    setLoading(true);
-    login('teacher@demo.edu')
-      .then(() => navigate('/briefing'))
-      .catch((err) => setError(err instanceof Error ? err.message : 'Demo login failed. Set VITE_DEMO_URL to point to the standalone demo.'))
-      .finally(() => setLoading(false));
+    demoLogin();
+    navigate('/briefing');
   }
 
   return (

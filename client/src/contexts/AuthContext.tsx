@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { api } from '../services/api';
+import { DEMO_TEACHER } from '../services/mockData';
 import { Teacher } from '../types';
 
 interface AuthContextType {
@@ -8,6 +9,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (email: string) => Promise<void>;
+  demoLogin: () => void;
   logout: () => void;
 }
 
@@ -20,6 +22,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (token) {
+      // Restore demo mode on page reload
+      if (localStorage.getItem('atlas_demo') === '1') {
+        api.enableDemoMode();
+      }
       api.setToken(token);
       api.get<{ id: string; email: string; firstName: string; lastName: string; photoUrl: string; school: { name: string }; sections: { id: string; courseName: string; period: string }[] }>('/auth/me')
         .then((data) => {
@@ -37,6 +43,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .catch(() => {
           setToken(null);
           localStorage.removeItem('atlas_token');
+          localStorage.removeItem('atlas_demo');
           api.setToken(null);
         })
         .finally(() => setIsLoading(false));
@@ -53,10 +60,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     api.setToken(result.token);
   }, []);
 
+  const demoLogin = useCallback(() => {
+    api.enableDemoMode();
+    const demoToken = 'demo-token-xyz';
+    setToken(demoToken);
+    setTeacher(DEMO_TEACHER as Teacher);
+    localStorage.setItem('atlas_token', demoToken);
+    localStorage.setItem('atlas_demo', '1');
+    api.setToken(demoToken);
+  }, []);
+
   const logout = useCallback(() => {
     setToken(null);
     setTeacher(null);
     localStorage.removeItem('atlas_token');
+    localStorage.removeItem('atlas_demo');
     api.setToken(null);
   }, []);
 
@@ -68,6 +86,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         isAuthenticated: !!teacher,
         isLoading,
         login,
+        demoLogin,
         logout,
       }}
     >
