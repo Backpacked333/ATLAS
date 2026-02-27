@@ -41,8 +41,8 @@ export function RosterPage() {
     }
 
     result.sort((a, b) => {
-      const aVal = (a as Record<string, unknown>)[sortField];
-      const bVal = (b as Record<string, unknown>)[sortField];
+      const aVal = (a as unknown as Record<string, unknown>)[sortField];
+      const bVal = (b as unknown as Record<string, unknown>)[sortField];
       if (typeof aVal === 'string' && typeof bVal === 'string') {
         return sortAsc ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
       }
@@ -183,7 +183,7 @@ export function RosterPage() {
                   <tr key={`${student.id}-${student.sectionId}`} className="hover:bg-gray-50">
                     <td className="px-3 py-3">
                       <Link to={`/students/${student.id}`} className="flex items-center gap-2 hover:underline">
-                        <div className="h-8 w-8 rounded-full bg-atlas-accent/20 flex items-center justify-center text-xs font-medium text-atlas-primary">
+                        <div className="h-8 w-8 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-xs font-bold text-white shadow-sm">
                           {student.firstName[0]}{student.lastName[0]}
                         </div>
                         <div>

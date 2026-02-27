@@ -1,10 +1,10 @@
 import { Response, NextFunction } from 'express';
-import jwt from 'jsonwebtoken';
+import jwt, { Secret, SignOptions } from 'jsonwebtoken';
 import { prisma } from '../utils/prisma';
 import { AuthenticatedRequest, TeacherContext } from '../types';
 import { UnauthorizedError } from '../utils/errors';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-in-production';
+const JWT_SECRET: Secret = process.env.JWT_SECRET || 'dev-secret-change-in-production';
 
 export async function authenticateTeacher(
   req: AuthenticatedRequest,
@@ -53,7 +53,11 @@ export async function authenticateTeacher(
 }
 
 export function generateToken(teacherId: string): string {
-  return jwt.sign({ teacherId }, JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRY || '8h',
-  });
+  return jwt.sign(
+    { teacherId },
+    JWT_SECRET,
+    {
+      expiresIn: process.env.JWT_EXPIRY || '8h',
+    } as SignOptions
+  );
 }

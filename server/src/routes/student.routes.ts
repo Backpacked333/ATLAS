@@ -17,7 +17,7 @@ router.get(
   verifyStudentAccess,
   async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     try {
-      const profile = await getStudentProfile(req.teacher!.id, req.params.studentId);
+      const profile = await getStudentProfile(req.teacher!.id, req.params.studentId as string);
       res.json(profile);
     } catch (error) {
       next(error);

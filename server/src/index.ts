@@ -15,6 +15,10 @@ import referralRoutes from './routes/referral.routes';
 import interventionRoutes from './routes/intervention.routes';
 import notificationRoutes from './routes/notification.routes';
 import aiRoutes from './routes/ai.routes';
+import communicationRoutes from './routes/communication.routes';
+import insightsRoutes from './routes/insights.routes';
+import substituteRoutes from './routes/substitute.routes';
+import actionItemRoutes from './routes/action-item.routes';
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -50,6 +54,10 @@ app.use('/api/referrals', referralRoutes);
 app.use('/api/interventions', interventionRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/ai', aiRoutes);
+app.use('/api/communication', communicationRoutes);
+app.use('/api/insights', insightsRoutes);
+app.use('/api/substitute', substituteRoutes);
+app.use('/api/action-items', actionItemRoutes);
 
 // Health check
 app.get('/api/health', (_req, res) => {
