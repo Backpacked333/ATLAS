@@ -29,17 +29,19 @@ export function LoginPage() {
     }
   }
 
-  async function handleDemoLogin() {
+  function handleDemoLogin() {
+    const demoUrl = import.meta.env.VITE_DEMO_URL;
+    if (demoUrl) {
+      window.location.href = demoUrl;
+      return;
+    }
+    // Fallback: attempt real API login (works in local dev with server running)
     setError('');
     setLoading(true);
-    try {
-      await login('teacher@demo.edu');
-      navigate('/briefing');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Login failed');
-    } finally {
-      setLoading(false);
-    }
+    login('teacher@demo.edu')
+      .then(() => navigate('/briefing'))
+      .catch((err) => setError(err instanceof Error ? err.message : 'Demo login failed. Set VITE_DEMO_URL to point to the standalone demo.'))
+      .finally(() => setLoading(false));
   }
 
   return (
