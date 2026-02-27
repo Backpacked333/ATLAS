@@ -5,11 +5,18 @@ import { ProfessionalInsights } from '../types';
 export function InsightsPage() {
   const [insights, setInsights] = useState<ProfessionalInsights | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     api.get<ProfessionalInsights>('/insights')
-      .then(setInsights)
-      .catch(() => {})
+      .then((data) => {
+        setInsights(data);
+        setError(null);
+      })
+      .catch((err) => {
+        setInsights(null);
+        setError(err instanceof Error ? err.message : 'Failed to load insights');
+      })
       .finally(() => setLoading(false));
   }, []);
 
@@ -30,10 +37,19 @@ export function InsightsPage() {
     );
   }
 
+  if (error) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-red-600 font-medium mb-2">Failed to load insights</p>
+        <p className="text-gray-500 text-sm">{error}</p>
+      </div>
+    );
+  }
+
   if (!insights) {
     return (
       <div className="text-center py-12">
-        <p className="text-gray-500">Unable to load insights.</p>
+        <p className="text-gray-500">No insights available yet.</p>
       </div>
     );
   }
