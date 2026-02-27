@@ -8,19 +8,28 @@ export function CommunicationPage() {
   const [suggestions, setSuggestions] = useState<PositiveContactSuggestion[]>([]);
   const [contacts, setContacts] = useState<ParentContactRecord[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (tab === 'suggestions') {
       setLoading(true);
+      setError(null);
       api.get<PositiveContactSuggestion[]>('/communication/positive-suggestions')
         .then(setSuggestions)
-        .catch(() => {})
+        .catch((err) => {
+          setError('Failed to load suggestions. Please try again.');
+          console.error('Error loading suggestions:', err);
+        })
         .finally(() => setLoading(false));
     } else {
       setLoading(true);
+      setError(null);
       api.get<ParentContactRecord[]>('/communication/contacts')
         .then(setContacts)
-        .catch(() => {})
+        .catch((err) => {
+          setError('Failed to load contact history. Please try again.');
+          console.error('Error loading contacts:', err);
+        })
         .finally(() => setLoading(false));
     }
   }, [tab]);
@@ -57,6 +66,11 @@ export function CommunicationPage() {
 
       {tab === 'suggestions' && (
         <div className="space-y-4">
+          {error && (
+            <div className="card p-4 bg-red-50 border-red-200">
+              <p className="text-sm text-red-800">{error}</p>
+            </div>
+          )}
           {loading ? (
             <div className="space-y-3">
               {[...Array(3)].map((_, i) => (
@@ -136,6 +150,11 @@ export function CommunicationPage() {
 
       {tab === 'history' && (
         <div className="space-y-2">
+          {error && (
+            <div className="card p-4 bg-red-50 border-red-200">
+              <p className="text-sm text-red-800">{error}</p>
+            </div>
+          )}
           {loading ? (
             <div className="space-y-3">
               {[...Array(5)].map((_, i) => (
