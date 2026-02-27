@@ -46,7 +46,7 @@ router.get('/unread-count', authenticateTeacher, async (req: AuthenticatedReques
  */
 router.put('/:notificationId/read', authenticateTeacher, async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   try {
-    await markNotificationRead(req.params.notificationId, req.teacher!.id);
+    await markNotificationRead(req.params.notificationId as string, req.teacher!.id);
     res.json({ success: true });
   } catch (error) {
     next(error);
