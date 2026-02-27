@@ -321,7 +321,7 @@ export function SectionPage() {
             <div className="card p-8 text-center">
               <p className="text-gray-500">Loading substitute brief...</p>
             </div>
-          ) : !subBrief && subBriefError ? null : (
+          ) : !subBrief && subBriefError ? null : subBrief ? (
             <>
               <div className="card p-3 bg-amber-50 border-amber-200">
                 <p className="text-xs text-amber-700">
@@ -384,6 +384,10 @@ export function SectionPage() {
                 </div>
               </div>
             </>
+          ) : (
+            <div className="card p-8 text-center">
+              <p className="text-gray-500">Unable to load substitute brief.</p>
+            </div>
           )}
         </div>
       )}
