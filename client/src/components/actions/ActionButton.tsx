@@ -26,11 +26,13 @@ export function ActionButton({ suggestion, onCreated }: Props) {
   const [actionTaken, setActionTaken] = useState('');
   const [notes, setNotes] = useState('');
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   async function handleCreate(e: React.MouseEvent) {
     e.preventDefault();
     e.stopPropagation();
     setSaving(true);
+    setError(null);
     try {
       const item = await api.post<ActionItemView>('/action-items', {
         studentId: suggestion.studentId,
@@ -42,8 +44,8 @@ export function ActionButton({ suggestion, onCreated }: Props) {
       setActionItem(item);
       setState('created');
       onCreated?.(item);
-    } catch {
-      // silently fail
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to create action item. Please try again.');
     } finally {
       setSaving(false);
     }
@@ -54,14 +56,15 @@ export function ActionButton({ suggestion, onCreated }: Props) {
     e.stopPropagation();
     if (!actionItem || !actionTaken) return;
     setSaving(true);
+    setError(null);
     try {
       await api.put(`/action-items/${actionItem.id}/complete`, {
         actionTaken,
         completionNotes: notes,
       });
       setState('done');
-    } catch {
-      // silently fail
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to complete action item. Please try again.');
     } finally {
       setSaving(false);
     }
@@ -78,6 +81,18 @@ export function ActionButton({ suggestion, onCreated }: Props) {
   if (state === 'created' || state === 'completing') {
     return (
       <form onSubmit={handleComplete} onClick={(e) => e.stopPropagation()} className="mt-2 p-2 bg-blue-50 rounded space-y-2">
+        {error && (
+          <div className="px-2 py-1.5 bg-red-50 rounded text-xs text-red-700 flex items-center justify-between gap-2">
+            <span>{error}</span>
+            <button
+              type="button"
+              onClick={() => setError(null)}
+              className="text-red-500 hover:text-red-700 font-bold"
+            >
+              ×
+            </button>
+          </div>
+        )}
         <p className="text-xs font-medium text-blue-800">{suggestion.suggestedAction}</p>
         <select
           value={actionTaken}
@@ -118,13 +133,27 @@ export function ActionButton({ suggestion, onCreated }: Props) {
   }
 
   return (
-    <button
-      onClick={handleCreate}
-      disabled={saving}
-      className="mt-2 w-full text-xs text-blue-600 bg-blue-50 hover:bg-blue-100 rounded px-2 py-1.5 text-left transition-colors flex items-center gap-1"
-    >
-      <span>&#9654;</span>
-      <span>{saving ? 'Creating...' : suggestion.suggestedAction}</span>
-    </button>
+    <div>
+      {error && (
+        <div className="mt-2 px-2 py-1.5 bg-red-50 rounded text-xs text-red-700 flex items-center justify-between gap-2">
+          <span>{error}</span>
+          <button
+            type="button"
+            onClick={() => setError(null)}
+            className="text-red-500 hover:text-red-700 font-bold"
+          >
+            ×
+          </button>
+        </div>
+      )}
+      <button
+        onClick={handleCreate}
+        disabled={saving}
+        className="mt-2 w-full text-xs text-blue-600 bg-blue-50 hover:bg-blue-100 rounded px-2 py-1.5 text-left transition-colors flex items-center gap-1"
+      >
+        <span>&#9654;</span>
+        <span>{saving ? 'Creating...' : suggestion.suggestedAction}</span>
+      </button>
+    </div>
   );
 }
