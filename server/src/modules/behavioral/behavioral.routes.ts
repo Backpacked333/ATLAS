@@ -85,7 +85,7 @@ router.post(
 router.patch(
   '/incidents/:id',
   authenticateTeacher,
-  requirePermission('behavioral_incident', 'create'), // Teachers who can create can also update their own
+  requirePermission('behavioral_incident', 'update'),
   auditMiddleware('BehavioralIncident', 'UPDATE'),
   async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     try {
