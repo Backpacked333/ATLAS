@@ -19,6 +19,13 @@ import { ReportsPage } from './pages/ReportsPage';
 import { MobileSettingsPage } from './pages/MobileSettingsPage';
 import { ApiGatewayPage } from './pages/ApiGatewayPage';
 import { DatabaseAdminPage } from './pages/DatabaseAdminPage';
+import { PerformancePage } from './pages/PerformancePage';
+import { DisasterRecoveryPage } from './pages/DisasterRecoveryPage';
+import { EncryptionPage } from './pages/EncryptionPage';
+import { TenantsPage } from './pages/TenantsPage';
+import { AuthManagementPage } from './pages/AuthManagementPage';
+import { BackupRecoveryPage } from './pages/BackupRecoveryPage';
+import { MonitoringPage } from './pages/MonitoringPage';
 
 export default function App() {
   return (
@@ -44,6 +51,13 @@ export default function App() {
           <Route path="/mobile-settings" element={<MobileSettingsPage />} />
           <Route path="/api-gateway" element={<ApiGatewayPage />} />
           <Route path="/database" element={<DatabaseAdminPage />} />
+          <Route path="/performance" element={<PerformancePage />} />
+          <Route path="/disaster-recovery" element={<DisasterRecoveryPage />} />
+          <Route path="/encryption" element={<EncryptionPage />} />
+          <Route path="/tenants" element={<TenantsPage />} />
+          <Route path="/auth-management" element={<AuthManagementPage />} />
+          <Route path="/backup-recovery" element={<BackupRecoveryPage />} />
+          <Route path="/monitoring" element={<MonitoringPage />} />
         </Route>
       </Routes>
     </AuthProvider>

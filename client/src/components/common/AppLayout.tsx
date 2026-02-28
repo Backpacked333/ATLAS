@@ -44,12 +44,19 @@ export function AppLayout() {
 
   const adminNavItems = [
     { path: '/access-control', label: 'Access Control', icon: '🔐' },
+    { path: '/auth-management', label: 'Auth & Sessions', icon: '🔑' },
     { path: '/audit-log', label: 'Audit Log', icon: '📝' },
     { path: '/compliance', label: 'Compliance', icon: '🛡' },
+    { path: '/encryption', label: 'Encryption', icon: '🔒' },
     { path: '/integrations', label: 'Integrations', icon: '🔗' },
     { path: '/api-gateway', label: 'API Gateway', icon: '🌐' },
     { path: '/mobile-settings', label: 'Mobile', icon: '📱' },
     { path: '/database', label: 'Database', icon: '🗄' },
+    { path: '/performance', label: 'Performance', icon: '⚡' },
+    { path: '/monitoring', label: 'Monitoring', icon: '📡' },
+    { path: '/backup-recovery', label: 'Backups', icon: '💾' },
+    { path: '/disaster-recovery', label: 'DR Plans', icon: '🔄' },
+    { path: '/tenants', label: 'Tenants', icon: '🏢' },
   ];
 
   const isActive = (path: string) => location.pathname === path;

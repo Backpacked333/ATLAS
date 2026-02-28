@@ -1193,6 +1193,507 @@ enum BackupStatus {
   EXPIRED
 }
 
+// ─── Performance Optimization (Module 19) ────────────────────────────
+
+model CacheEntry {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  region      String   // e.g. "query", "session", "page"
+  sizeBytes   Int      @default(0)
+  hitCount    Int      @default(0)
+  missCount   Int      @default(0)
+  expiresAt   DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([region])
+  @@index([expiresAt])
+}
+
+model PerformanceMetric {
+  id             String   @id @default(cuid())
+  endpoint       String   // e.g. "/api/students", "/api/briefing"
+  method         String   // GET, POST, PUT, DELETE
+  avgResponseMs  Float
+  p95ResponseMs  Float
+  p99ResponseMs  Float
+  requestCount   Int      @default(0)
+  errorCount     Int      @default(0)
+  periodStart    DateTime
+  periodEnd      DateTime
+  createdAt      DateTime @default(now())
+
+  @@index([endpoint])
+  @@index([periodStart])
+}
+
+model PerformanceBenchmark {
+  id          String   @id @default(cuid())
+  name        String
+  category    String   // e.g. "query", "api", "render"
+  targetMs    Float
+  actualMs    Float
+  passed      Boolean
+  details     String?  // JSON with benchmark details
+  runAt       DateTime @default(now())
+
+  @@index([category])
+  @@index([runAt])
+}
+
+// ─── Disaster Recovery (Module 20) ──────────────────────────────────
+
+model RecoveryPlan {
+  id          String              @id @default(cuid())
+  name        String
+  description String?
+  type        RecoveryPlanType
+  priority    Int                 @default(1) // 1=highest
+  rtoMinutes  Int                 // Recovery Time Objective
+  rpoMinutes  Int                 // Recovery Point Objective
+  steps       String              // JSON array of recovery steps
+  isActive    Boolean             @default(true)
+  lastTestedAt DateTime?
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+
+  tests RecoveryTest[]
+
+  @@index([type])
+  @@index([isActive])
+}
+
+enum RecoveryPlanType {
+  DATABASE_FAILURE
+  APPLICATION_FAILURE
+  NETWORK_FAILURE
+  FULL_SITE_RECOVERY
+  DATA_CORRUPTION
+  RANSOMWARE
+}
+
+model RecoveryTest {
+  id             String           @id @default(cuid())
+  recoveryPlanId String
+  status         RecoveryTestStatus @default(IN_PROGRESS)
+  startedAt      DateTime         @default(now())
+  completedAt    DateTime?
+  durationMs     Int?
+  passed         Boolean?
+  notes          String?
+  issues         String?          // JSON array of issues found
+
+  recoveryPlan RecoveryPlan @relation(fields: [recoveryPlanId], references: [id])
+
+  @@index([recoveryPlanId])
+  @@index([status])
+  @@index([startedAt])
+}
+
+enum RecoveryTestStatus {
+  IN_PROGRESS
+  PASSED
+  FAILED
+  ABORTED
+}
+
+model FailoverEvent {
+  id             String         @id @default(cuid())
+  sourceRegion   String
+  targetRegion   String
+  trigger        String         // "AUTOMATIC" | "MANUAL"
+  status         FailoverStatus @default(INITIATED)
+  startedAt      DateTime       @default(now())
+  completedAt    DateTime?
+  durationMs     Int?
+  details        String?        // JSON with failover details
+
+  @@index([status])
+  @@index([startedAt])
+}
+
+enum FailoverStatus {
+  INITIATED
+  IN_PROGRESS_F // Suffix to avoid Prisma enum conflict
+  COMPLETED_F
+  FAILED_F
+  ROLLED_BACK_F
+}
+
+// ─── Encryption Security (Module 21) ────────────────────────────────
+
+model EncryptionKey {
+  id          String           @id @default(cuid())
+  alias       String           @unique
+  algorithm   String           // e.g. "AES-256-GCM", "RSA-2048"
+  purpose     KeyPurpose
+  status      KeyStatus        @default(ACTIVE)
+  rotatedFromId String?
+  expiresAt   DateTime?
+  createdAt   DateTime         @default(now())
+  rotatedAt   DateTime?
+
+  @@index([purpose])
+  @@index([status])
+  @@index([expiresAt])
+}
+
+enum KeyPurpose {
+  DATA_ENCRYPTION
+  TOKEN_SIGNING
+  BACKUP_ENCRYPTION
+  TRANSPORT
+  API_SIGNING
+}
+
+enum KeyStatus {
+  ACTIVE
+  ROTATED
+  REVOKED_KEY
+  EXPIRED_KEY
+}
+
+model EncryptedField {
+  id          String   @id @default(cuid())
+  tableName   String
+  fieldName   String
+  keyAlias    String
+  encryptionType String // "AES-256-GCM", "FIELD_LEVEL", "COLUMN_LEVEL"
+  createdAt   DateTime @default(now())
+
+  @@unique([tableName, fieldName])
+  @@index([keyAlias])
+}
+
+model SecurityScan {
+  id             String          @id @default(cuid())
+  scanType       SecurityScanType
+  status         ScanStatus      @default(IN_PROGRESS)
+  vulnerabilities Int             @default(0)
+  criticalCount  Int             @default(0)
+  highCount      Int             @default(0)
+  mediumCount    Int             @default(0)
+  lowCount       Int             @default(0)
+  report         String?         // JSON scan report
+  startedAt      DateTime        @default(now())
+  completedAt    DateTime?
+
+  @@index([scanType])
+  @@index([status])
+  @@index([startedAt])
+}
+
+enum SecurityScanType {
+  VULNERABILITY
+  PENETRATION
+  COMPLIANCE_SCAN
+  ENCRYPTION_AUDIT
+  ACCESS_AUDIT
+}
+
+enum ScanStatus {
+  IN_PROGRESS_S
+  COMPLETED_S
+  FAILED_S
+}
+
+// ─── Multi-Tenancy (Module 22) ──────────────────────────────────────
+
+model Tenant {
+  id             String        @id @default(cuid())
+  name           String        @unique
+  displayName    String
+  domain         String?       @unique
+  status         TenantStatus  @default(ACTIVE)
+  tier           TenantTier    @default(STANDARD)
+  maxUsers       Int           @default(100)
+  maxStorage     BigInt        @default(5368709120) // 5GB default
+  config         String?       // JSON tenant-specific configuration
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  resourceQuotas TenantResourceQuota[]
+
+  @@index([status])
+  @@index([tier])
+}
+
+enum TenantStatus {
+  ACTIVE
+  SUSPENDED
+  PROVISIONING
+  DECOMMISSIONED
+}
+
+enum TenantTier {
+  FREE
+  STANDARD
+  PREMIUM
+  ENTERPRISE
+}
+
+model TenantResourceQuota {
+  id           String   @id @default(cuid())
+  tenantId     String
+  resourceType String   // e.g. "api_calls", "storage", "users", "reports"
+  limitValue   BigInt
+  currentUsage BigInt   @default(0)
+  periodStart  DateTime
+  periodEnd    DateTime
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@unique([tenantId, resourceType, periodStart])
+  @@index([tenantId])
+  @@index([resourceType])
+}
+
+model DataPartition {
+  id          String   @id @default(cuid())
+  tenantId    String
+  tableName   String
+  partitionKey String
+  rowCount    BigInt   @default(0)
+  sizeBytes   BigInt   @default(0)
+  lastAnalyzed DateTime?
+  createdAt   DateTime @default(now())
+
+  @@unique([tenantId, tableName])
+  @@index([tenantId])
+}
+
+// ─── Authentication Authorization (Module 23) ────────────────────────
+
+model AuthSession {
+  id          String        @id @default(cuid())
+  userId      String
+  userType    String        // "teacher", "counselor", "admin"
+  ipAddress   String?
+  userAgent   String?
+  isActive    Boolean       @default(true)
+  expiresAt   DateTime
+  lastActivityAt DateTime  @default(now())
+  createdAt   DateTime      @default(now())
+
+  @@index([userId])
+  @@index([isActive])
+  @@index([expiresAt])
+}
+
+model LoginAttempt {
+  id        String   @id @default(cuid())
+  email     String
+  ipAddress String?
+  userAgent String?
+  success   Boolean
+  failReason String? // "INVALID_CREDENTIALS", "ACCOUNT_LOCKED", "MFA_FAILED"
+  createdAt DateTime @default(now())
+
+  @@index([email])
+  @@index([ipAddress])
+  @@index([createdAt])
+  @@index([success])
+}
+
+model PasswordPolicy {
+  id              String   @id @default(cuid())
+  name            String   @unique
+  minLength       Int      @default(12)
+  requireUppercase Boolean @default(true)
+  requireLowercase Boolean @default(true)
+  requireNumbers  Boolean  @default(true)
+  requireSpecial  Boolean  @default(true)
+  maxAgeDays      Int      @default(90)
+  historyCount    Int      @default(5) // Can't reuse last N passwords
+  lockoutThreshold Int     @default(5)
+  lockoutDurationMinutes Int @default(30)
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([isActive])
+}
+
+model MfaEnrollment {
+  id          String   @id @default(cuid())
+  userId      String
+  method      MfaMethod
+  isVerified  Boolean  @default(false)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  lastUsedAt  DateTime?
+
+  @@unique([userId, method])
+  @@index([userId])
+}
+
+enum MfaMethod {
+  TOTP
+  SMS
+  EMAIL_MFA
+  SECURITY_KEY
+}
+
+// ─── Backup Recovery (Module 24) ────────────────────────────────────
+
+model ScheduledBackup {
+  id          String         @id @default(cuid())
+  name        String
+  type        BackupType
+  schedule    String         // Cron expression: "0 2 * * *"
+  isActive    Boolean        @default(true)
+  retention   Int            @default(30) // Days to retain
+  destination String         // e.g. "s3://backups/atlas/"
+  lastRunAt   DateTime?
+  nextRunAt   DateTime?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  recoveryPoints RecoveryPoint[]
+
+  @@index([isActive])
+  @@index([nextRunAt])
+}
+
+model RecoveryPoint {
+  id                String         @id @default(cuid())
+  scheduledBackupId String?
+  type              BackupType
+  status            BackupStatus   @default(IN_PROGRESS)
+  sizeBytes         BigInt?
+  location          String         // Storage path
+  checksum          String?        // Integrity verification
+  isVerified        Boolean        @default(false)
+  retainUntil       DateTime?
+  createdAt         DateTime       @default(now())
+  completedAt       DateTime?
+  errorMessage      String?
+
+  scheduledBackup ScheduledBackup? @relation(fields: [scheduledBackupId], references: [id])
+
+  @@index([scheduledBackupId])
+  @@index([type])
+  @@index([status])
+  @@index([retainUntil])
+}
+
+model RetentionPolicy {
+  id            String   @id @default(cuid())
+  name          String   @unique
+  backupType    BackupType
+  retentionDays Int
+  maxCopies     Int      @default(10)
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([backupType])
+  @@index([isActive])
+}
+
+// ─── Monitoring Alerting (Module 25) ─────────────────────────────────
+
+model SystemMetric {
+  id         String   @id @default(cuid())
+  name       String   // e.g. "cpu_usage", "memory_usage", "disk_usage", "active_connections"
+  value      Float
+  unit       String   // e.g. "percent", "bytes", "count", "ms"
+  host       String   @default("primary")
+  tags       String?  // JSON key-value tags
+  recordedAt DateTime @default(now())
+
+  @@index([name])
+  @@index([host])
+  @@index([recordedAt])
+}
+
+model ServiceHealth {
+  id           String              @id @default(cuid())
+  serviceName  String              // e.g. "api", "database", "cache", "queue"
+  status       ServiceHealthStatus @default(HEALTHY)
+  responseMs   Int?
+  errorMessage String?
+  metadata     String?             // JSON additional health info
+  checkedAt    DateTime            @default(now())
+
+  @@index([serviceName])
+  @@index([status])
+  @@index([checkedAt])
+}
+
+enum ServiceHealthStatus {
+  HEALTHY_S
+  DEGRADED_S
+  UNHEALTHY_S
+  UNREACHABLE
+}
+
+model MonitoringDashboard {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  layout      String   // JSON widget layout configuration
+  isDefault   Boolean  @default(false)
+  createdById String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([isDefault])
+  @@index([createdById])
+}
+
+model MonitoringAlert {
+  id           String               @id @default(cuid())
+  name         String
+  metricName   String
+  condition    String               // e.g. "> 90", "< 10", "== 0"
+  threshold    Float
+  severity     MonitoringAlertSeverity @default(WARNING_M)
+  isActive     Boolean              @default(true)
+  lastTriggeredAt DateTime?
+  cooldownMinutes Int               @default(15)
+  notifyChannels  String            @default("IN_APP") // Comma-separated
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
+
+  incidents MonitoringIncident[]
+
+  @@index([metricName])
+  @@index([isActive])
+}
+
+enum MonitoringAlertSeverity {
+  INFO_M
+  WARNING_M
+  CRITICAL_M
+}
+
+model MonitoringIncident {
+  id                String           @id @default(cuid())
+  monitoringAlertId String
+  status            IncidentStatus   @default(OPEN_I)
+  metricValue       Float
+  message           String
+  acknowledgedById  String?
+  acknowledgedAt    DateTime?
+  resolvedAt        DateTime?
+  createdAt         DateTime         @default(now())
+
+  monitoringAlert MonitoringAlert @relation(fields: [monitoringAlertId], references: [id])
+
+  @@index([monitoringAlertId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+enum IncidentStatus {
+  OPEN_I
+  ACKNOWLEDGED_I
+  RESOLVED_I
+}
+
 // ─── AI Conversations ─────────────────────────────────────────────────
 
 model AIConversation {

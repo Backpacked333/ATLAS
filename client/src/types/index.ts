@@ -549,3 +549,260 @@ export interface DatabaseSummary {
     completedAt: string | null;
   }[];
 }
+
+// ─── Performance Optimization (Module 19) ────────────────────────────
+
+export interface PerformanceSummary {
+  totalRequests24h: number;
+  totalErrors24h: number;
+  errorRate: number;
+  avgResponseMs: number;
+  maxP99Ms: number;
+  endpointCount: number;
+}
+
+export interface CacheSummary {
+  totalEntries: number;
+  totalSizeBytes: number;
+  hitRate: number;
+  totalHits: number;
+  totalMisses: number;
+  byRegion: { region: string; count: number; sizeBytes: number }[];
+}
+
+export interface PerformanceBenchmark {
+  id: string;
+  name: string;
+  category: string;
+  targetMs: number;
+  actualMs: number;
+  passed: boolean;
+  runAt: string;
+}
+
+// ─── Disaster Recovery (Module 20) ───────────────────────────────────
+
+export interface RecoveryPlan {
+  id: string;
+  name: string;
+  description: string | null;
+  type: string;
+  priority: number;
+  rtoMinutes: number;
+  rpoMinutes: number;
+  steps: string;
+  isActive: boolean;
+  lastTestedAt: string | null;
+  _count: { tests: number };
+}
+
+export interface RecoveryTest {
+  id: string;
+  status: string;
+  startedAt: string;
+  completedAt: string | null;
+  durationMs: number | null;
+  passed: boolean | null;
+  notes: string | null;
+}
+
+export interface RecoverySummary {
+  totalPlans: number;
+  activePlans: number;
+  testsLast30d: number;
+  failedTestsLast30d: number;
+  failoversLast30d: number;
+}
+
+// ─── Encryption Security (Module 21) ─────────────────────────────────
+
+export interface EncryptionKey {
+  id: string;
+  alias: string;
+  algorithm: string;
+  purpose: string;
+  status: string;
+  expiresAt: string | null;
+  createdAt: string;
+  rotatedAt: string | null;
+}
+
+export interface EncryptedField {
+  id: string;
+  tableName: string;
+  fieldName: string;
+  keyAlias: string;
+  encryptionType: string;
+}
+
+export interface SecurityScan {
+  id: string;
+  scanType: string;
+  status: string;
+  vulnerabilities: number;
+  criticalCount: number;
+  highCount: number;
+  mediumCount: number;
+  lowCount: number;
+  startedAt: string;
+  completedAt: string | null;
+}
+
+export interface EncryptionSummary {
+  totalKeys: number;
+  activeKeys: number;
+  encryptedFieldCount: number;
+  scansLast30d: number;
+  latestCritical: number;
+  latestHigh: number;
+}
+
+// ─── Multi-Tenancy (Module 22) ───────────────────────────────────────
+
+export interface Tenant {
+  id: string;
+  name: string;
+  displayName: string;
+  domain: string | null;
+  status: string;
+  tier: string;
+  maxUsers: number;
+  maxStorage: number;
+  createdAt: string;
+  _count: { resourceQuotas: number };
+}
+
+export interface TenancySummary {
+  totalTenants: number;
+  activeTenants: number;
+  suspendedTenants: number;
+  partitionCount: number;
+  byTier: { tier: string; count: number }[];
+}
+
+// ─── Authentication Authorization (Module 23) ────────────────────────
+
+export interface AuthSession {
+  id: string;
+  userId: string;
+  userType: string;
+  ipAddress: string | null;
+  isActive: boolean;
+  expiresAt: string;
+  lastActivityAt: string;
+  createdAt: string;
+}
+
+export interface LoginAttempt {
+  id: string;
+  email: string;
+  ipAddress: string | null;
+  success: boolean;
+  failReason: string | null;
+  createdAt: string;
+}
+
+export interface PasswordPolicy {
+  id: string;
+  name: string;
+  minLength: number;
+  requireUppercase: boolean;
+  requireLowercase: boolean;
+  requireNumbers: boolean;
+  requireSpecial: boolean;
+  maxAgeDays: number;
+  historyCount: number;
+  lockoutThreshold: number;
+  lockoutDurationMinutes: number;
+  isActive: boolean;
+}
+
+export interface AuthManagementSummary {
+  totalAttempts24h: number;
+  failedAttempts24h: number;
+  totalAttempts7d: number;
+  activeSessions: number;
+  failureRate24h: number;
+  activePolicies: number;
+  mfaEnrollments: number;
+}
+
+// ─── Backup Recovery (Module 24) ─────────────────────────────────────
+
+export interface ScheduledBackup {
+  id: string;
+  name: string;
+  type: string;
+  schedule: string;
+  isActive: boolean;
+  retention: number;
+  destination: string;
+  lastRunAt: string | null;
+  nextRunAt: string | null;
+  _count: { recoveryPoints: number };
+}
+
+export interface RecoveryPoint {
+  id: string;
+  type: string;
+  status: string;
+  sizeBytes: number | null;
+  location: string;
+  isVerified: boolean;
+  retainUntil: string | null;
+  createdAt: string;
+  completedAt: string | null;
+}
+
+export interface BackupRecoverySummary {
+  totalScheduled: number;
+  activeScheduled: number;
+  totalRecoveryPoints: number;
+  completedPoints: number;
+  totalSizeBytes: number;
+  activeRetentionPolicies: number;
+}
+
+// ─── Monitoring Alerting (Module 25) ─────────────────────────────────
+
+export interface ServiceHealthInfo {
+  id: string;
+  serviceName: string;
+  status: string;
+  responseMs: number | null;
+  errorMessage: string | null;
+  checkedAt: string;
+}
+
+export interface MonitoringAlertInfo {
+  id: string;
+  name: string;
+  metricName: string;
+  condition: string;
+  threshold: number;
+  severity: string;
+  isActive: boolean;
+  lastTriggeredAt: string | null;
+  _count: { incidents: number };
+}
+
+export interface MonitoringIncident {
+  id: string;
+  status: string;
+  metricValue: number;
+  message: string;
+  acknowledgedAt: string | null;
+  resolvedAt: string | null;
+  createdAt: string;
+  monitoringAlert: { name: string; metricName: string; severity: string };
+}
+
+export interface MonitoringSummary {
+  totalAlerts: number;
+  activeAlerts: number;
+  openIncidents: number;
+  totalServices: number;
+  healthyServices: number;
+  degradedServices: number;
+  unhealthyServices: number;
+}

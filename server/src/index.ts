@@ -26,6 +26,13 @@ import reportingRoutes from './routes/reporting.routes';
 import mobileSupportRoutes from './routes/mobile-support.routes';
 import apiGatewayRoutes from './routes/api-gateway.routes';
 import databaseAdminRoutes from './routes/database-admin.routes';
+import performanceRoutes from './routes/performance.routes';
+import disasterRecoveryRoutes from './routes/disaster-recovery.routes';
+import encryptionRoutes from './routes/encryption.routes';
+import multiTenancyRoutes from './routes/multi-tenancy.routes';
+import authManagementRoutes from './routes/auth-management.routes';
+import backupRecoveryRoutes from './routes/backup-recovery.routes';
+import monitoringRoutes from './routes/monitoring.routes';
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -72,6 +79,13 @@ app.use('/api/reports', reportingRoutes);
 app.use('/api/mobile', mobileSupportRoutes);
 app.use('/api/gateway', apiGatewayRoutes);
 app.use('/api/database', databaseAdminRoutes);
+app.use('/api/performance', performanceRoutes);
+app.use('/api/disaster-recovery', disasterRecoveryRoutes);
+app.use('/api/encryption', encryptionRoutes);
+app.use('/api/tenants', multiTenancyRoutes);
+app.use('/api/auth-management', authManagementRoutes);
+app.use('/api/backup-recovery', backupRecoveryRoutes);
+app.use('/api/monitoring', monitoringRoutes);
 
 // Health check
 app.get('/api/health', (_req, res) => {
