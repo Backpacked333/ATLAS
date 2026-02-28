@@ -103,6 +103,7 @@ router.get(
 router.patch(
   '/messages/:id/read',
   authenticateTeacher,
+  requirePermission('parent_communication', 'read'),
   async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     try {
       const message = await ParentCommunicationService.markRead(req.params.id as string, req.teacher!.id);
@@ -120,6 +121,7 @@ router.patch(
 router.patch(
   '/threads/:threadId/read',
   authenticateTeacher,
+  requirePermission('parent_communication', 'read'),
   async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     try {
       await ParentCommunicationService.markThreadRead(req.params.threadId as string, req.teacher!.id);

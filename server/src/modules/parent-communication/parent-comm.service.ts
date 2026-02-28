@@ -2,6 +2,7 @@ import { prisma } from '../../utils/prisma';
 import { AuditService } from '../../infrastructure/audit/audit.service';
 import { eventBus } from '../../infrastructure/events/event-bus';
 import { cacheService } from '../../infrastructure/cache/cache.service';
+import { NotFoundError, ForbiddenError } from '../../utils/errors';
 import {
   SendMessageInput,
   MessageRecord,
@@ -224,9 +225,24 @@ export class ParentCommunicationService {
 
   /**
    * Mark a message as read.
+   * Validates that the user is the recipient of the message.
    */
   static async markRead(messageId: string, userId: string) {
-    const message = await prisma.parentMessage.update({
+    // First, verify the user has access to this message
+    const message = await prisma.parentMessage.findUnique({
+      where: { id: messageId },
+    });
+
+    if (!message) {
+      throw new NotFoundError('Message');
+    }
+
+    // Only the recipient can mark a message as read
+    if (message.recipientId !== userId) {
+      throw new ForbiddenError('You do not have access to this message');
+    }
+
+    const updatedMessage = await prisma.parentMessage.update({
       where: { id: messageId },
       data: { isRead: true, readAt: new Date() },
     });
@@ -240,7 +256,7 @@ export class ParentCommunicationService {
 
     cacheService.invalidateByPrefix(`messages:${userId}`);
 
-    return message;
+    return updatedMessage;
   }
 
   /**
