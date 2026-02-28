@@ -15,6 +15,8 @@ import referralRoutes from './routes/referral.routes';
 import interventionRoutes from './routes/intervention.routes';
 import notificationRoutes from './routes/notification.routes';
 import aiRoutes from './routes/ai.routes';
+import infrastructureRoutes from './routes/infrastructure.routes';
+import { monitoringService } from './infrastructure/monitoring.service';
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -51,9 +53,31 @@ app.use('/api/interventions', interventionRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/ai', aiRoutes);
 
-// Health check
-app.get('/api/health', (_req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+// ─── Infrastructure Routes (Modules 19–25) ────────────────────────────
+app.use('/api/infrastructure', infrastructureRoutes);
+
+// ─── Request Monitoring Middleware (Module 25) ─────────────────────────
+app.use((req, res, next) => {
+  const start = Date.now();
+  res.on('finish', () => {
+    monitoringService.recordRequest(req.method, req.path, res.statusCode, Date.now() - start);
+  });
+  next();
+});
+
+// Health check (enhanced with infrastructure health)
+app.get('/api/health', async (_req, res) => {
+  try {
+    const services = await monitoringService.checkServiceHealth();
+    const overall = services.every((s) => s.status === 'healthy') ? 'ok' : 'degraded';
+    res.json({
+      status: overall,
+      timestamp: new Date().toISOString(),
+      services: services.map((s) => ({ name: s.service, status: s.status, latencyMs: s.latencyMs })),
+    });
+  } catch {
+    res.json({ status: 'ok', timestamp: new Date().toISOString() });
+  }
 });
 
 // ─── Error Handling ────────────────────────────────────────────────────
@@ -63,6 +87,7 @@ app.use(errorHandler);
 app.listen(PORT, () => {
   console.log(`AtlasED Classroom API running on port ${PORT}`);
   console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log('Infrastructure modules loaded: Performance, DR, Encryption, Multi-Tenancy, Auth, Backup, Monitoring');
 });
 
 export default app;
