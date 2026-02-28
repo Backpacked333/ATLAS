@@ -51,6 +51,7 @@ router.get(
 router.post(
   '/staff',
   authenticateTeacher,
+  requirePermission('staff', 'create'),
   async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     try {
       const staff = await StaffSchedulingService.createStaffMember(
@@ -72,6 +73,7 @@ router.post(
 router.post(
   '/schedules',
   authenticateTeacher,
+  requirePermission('schedule', 'create'),
   async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     try {
       const schedule = await StaffSchedulingService.createSchedule(req.body, req.teacher!.id);
@@ -89,6 +91,7 @@ router.post(
 router.post(
   '/absences',
   authenticateTeacher,
+  requirePermission('schedule', 'create'),
   async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     try {
       const absence = await StaffSchedulingService.reportAbsence(
@@ -110,6 +113,7 @@ router.post(
 router.patch(
   '/absences/:id/status',
   authenticateTeacher,
+  requirePermission('schedule', 'update'),
   async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     try {
       const absence = await StaffSchedulingService.updateAbsenceStatus(
