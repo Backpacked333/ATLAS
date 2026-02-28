@@ -33,6 +33,7 @@ model School {
   sections      Section[]
   counselors    Counselor[]
   notifications Notification[]
+  staffMembers  StaffMember[]
 
   @@index([districtId])
 }
@@ -146,6 +147,10 @@ model Student {
   grades             Grade[]
   guardians          Guardian[]
   notifications      Notification[]
+  behavioralIncidents BehavioralIncident[]
+  complianceDeadlines ComplianceDeadline[]
+  iepDocuments       IEPDocument[]
+  parentMessages     ParentMessage[]
 
   @@index([schoolId])
   @@index([studentIdNo])
@@ -550,4 +555,394 @@ model AIMessage {
   conversation AIConversation @relation(fields: [conversationId], references: [id])
 
   @@index([conversationId])
+}
+
+// ─── Audit Logging (Cross-Cutting) ──────────────────────────────────
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  userId      String   // Who performed the action
+  userRole    String   // teacher, counselor, admin
+  action      String   // CREATE, READ, UPDATE, DELETE
+  resource    String   // e.g. "Student", "Attendance", "Grade"
+  resourceId  String?  // ID of the resource acted upon
+  details     Json?    // Additional context
+  ipAddress   String?
+  userAgent   String?
+  schoolId    String?
+  createdAt   DateTime @default(now())
+
+  @@index([userId])
+  @@index([resource, action])
+  @@index([createdAt])
+  @@index([schoolId])
+}
+
+// ─── Real-time Alerts (Cross-Cutting) ───────────────────────────────
+
+model Alert {
+  id          String      @id @default(cuid())
+  type        AlertType
+  severity    AlertSeverity
+  title       String
+  message     String
+  resourceType String?    // e.g. "Student", "Section"
+  resourceId  String?
+  schoolId    String?
+  recipientId String?     // Specific teacher/staff to notify
+  isRead      Boolean     @default(false)
+  isDismissed Boolean     @default(false)
+  createdAt   DateTime    @default(now())
+  readAt      DateTime?
+
+  @@index([recipientId, isRead])
+  @@index([schoolId, type])
+  @@index([createdAt])
+}
+
+enum AlertType {
+  ATTENDANCE_PATTERN
+  GRADE_DROP
+  BEHAVIORAL_INCIDENT
+  COMPLIANCE_DEADLINE
+  SCHEDULE_CONFLICT
+  SYSTEM_HEALTH
+  IEP_REVIEW_DUE
+  MISSING_WORK_THRESHOLD
+}
+
+enum AlertSeverity {
+  INFO
+  WARNING
+  CRITICAL
+}
+
+// ─── Behavioral Incidents (Module 4) ────────────────────────────────
+
+model BehavioralIncident {
+  id            String               @id @default(cuid())
+  studentId     String
+  reportedById  String               // Teacher ID
+  incidentDate  DateTime
+  incidentType  BehavioralIncidentType
+  location      String?
+  description   String
+  actionsTaken  Json?                // Array of actions taken
+  severity      IncidentSeverity
+  parentNotified Boolean             @default(false)
+  adminNotified  Boolean             @default(false)
+  followUpDate  DateTime?
+  followUpNotes String?
+  status        IncidentStatus       @default(OPEN)
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
+
+  student Student @relation(fields: [studentId], references: [id])
+
+  @@index([studentId])
+  @@index([reportedById])
+  @@index([incidentDate])
+  @@index([status])
+}
+
+enum BehavioralIncidentType {
+  DISRUPTION
+  DEFIANCE
+  BULLYING
+  FIGHTING
+  VANDALISM
+  ACADEMIC_DISHONESTY
+  TARDY_PATTERN
+  DRESS_CODE
+  TECHNOLOGY_MISUSE
+  OTHER
+}
+
+enum IncidentSeverity {
+  MINOR
+  MODERATE
+  MAJOR
+}
+
+enum IncidentStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  ESCALATED
+}
+
+// ─── Compliance Deadlines (Module 2) ────────────────────────────────
+
+model ComplianceDeadline {
+  id            String             @id @default(cuid())
+  studentId     String
+  type          ComplianceType
+  title         String
+  description   String?
+  dueDate       DateTime
+  status        ComplianceStatus   @default(PENDING)
+  assignedToId  String?            // Staff member responsible
+  completedAt   DateTime?
+  notes         String?
+  schoolId      String
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+
+  student Student @relation(fields: [studentId], references: [id])
+
+  @@index([studentId])
+  @@index([dueDate, status])
+  @@index([schoolId])
+  @@index([assignedToId])
+}
+
+enum ComplianceType {
+  IEP_ANNUAL_REVIEW
+  IEP_TRIENNIAL
+  PLAN_504_REVIEW
+  EVALUATION_TIMELINE
+  TRANSITION_PLAN
+  PROGRESS_REPORT
+  CONSENT_DEADLINE
+}
+
+enum ComplianceStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  OVERDUE
+  WAIVED
+}
+
+// ─── IEP Documents (Module 2) ───────────────────────────────────────
+
+model IEPDocument {
+  id            String        @id @default(cuid())
+  studentId     String
+  documentType  IEPDocumentType
+  title         String
+  status        DocumentStatus @default(DRAFT)
+  effectiveDate DateTime?
+  expirationDate DateTime?
+  goals         Json?          // Structured goals data
+  services      Json?          // Structured services data
+  createdById   String?
+  schoolId      String
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  student Student @relation(fields: [studentId], references: [id])
+
+  @@index([studentId])
+  @@index([documentType, status])
+  @@index([schoolId])
+}
+
+enum IEPDocumentType {
+  IEP
+  PLAN_504
+  BIP
+  FBA
+  EVALUATION_REPORT
+  TRANSITION_PLAN
+  PROGRESS_REPORT
+}
+
+enum DocumentStatus {
+  DRAFT
+  PENDING_REVIEW
+  ACTIVE
+  EXPIRED
+  AMENDED
+}
+
+// ─── Staff Scheduling (Module 6) ────────────────────────────────────
+
+model StaffMember {
+  id            String       @id @default(cuid())
+  schoolId      String
+  email         String       @unique
+  firstName     String
+  lastName      String
+  role          StaffRole
+  department    String?
+  isActive      Boolean      @default(true)
+  hireDate      DateTime?
+  certifications Json?       // Array of certifications
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  school    School          @relation(fields: [schoolId], references: [id])
+  schedules StaffSchedule[]
+  absences  StaffAbsence[]
+
+  @@index([schoolId])
+  @@index([role])
+}
+
+enum StaffRole {
+  TEACHER
+  ADMINISTRATOR
+  COUNSELOR
+  PARAPROFESSIONAL
+  SUBSTITUTE
+  SPECIALIST
+  SUPPORT_STAFF
+}
+
+model StaffSchedule {
+  id            String       @id @default(cuid())
+  staffMemberId String
+  dayOfWeek     Int          // 0=Sunday, 1=Monday, ..., 6=Saturday
+  startTime     String       // "08:00"
+  endTime       String       // "15:30"
+  location      String?      // Room or building
+  duty          String?      // e.g. "Homeroom", "Lunch Duty", "Planning"
+  isRecurring   Boolean      @default(true)
+  effectiveFrom DateTime
+  effectiveUntil DateTime?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  staffMember StaffMember @relation(fields: [staffMemberId], references: [id])
+
+  @@index([staffMemberId])
+  @@index([dayOfWeek])
+}
+
+model StaffAbsence {
+  id            String        @id @default(cuid())
+  staffMemberId String
+  startDate     DateTime      @db.Date
+  endDate       DateTime      @db.Date
+  reason        AbsenceReason
+  notes         String?
+  substituteId  String?       // Another staff member covering
+  status        AbsenceStatus @default(PENDING)
+  approvedById  String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  staffMember StaffMember @relation(fields: [staffMemberId], references: [id])
+
+  @@index([staffMemberId])
+  @@index([startDate, endDate])
+  @@index([status])
+}
+
+enum AbsenceReason {
+  SICK
+  PERSONAL
+  PROFESSIONAL_DEVELOPMENT
+  JURY_DUTY
+  BEREAVEMENT
+  FAMILY_MEDICAL
+  OTHER
+}
+
+enum AbsenceStatus {
+  PENDING
+  APPROVED
+  DENIED
+  CANCELLED
+}
+
+// ─── Parent Messages (Module 7) ─────────────────────────────────────
+
+model ParentMessage {
+  id            String           @id @default(cuid())
+  threadId      String?          // For message threading
+  senderId      String           // Teacher or guardian ID
+  senderType    SenderType
+  recipientId   String
+  recipientType SenderType
+  studentId     String?          // Relevant student context
+  subject       String
+  body          String
+  isRead        Boolean          @default(false)
+  readAt        DateTime?
+  priority      MessagePriority  @default(NORMAL)
+  channel       MessageChannel   @default(IN_APP)
+  createdAt     DateTime         @default(now())
+
+  student Student? @relation(fields: [studentId], references: [id])
+
+  @@index([senderId, senderType])
+  @@index([recipientId, recipientType, isRead])
+  @@index([threadId])
+  @@index([studentId])
+  @@index([createdAt])
+}
+
+enum SenderType {
+  TEACHER
+  GUARDIAN
+  SYSTEM
+}
+
+enum MessagePriority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
+enum MessageChannel {
+  IN_APP
+  EMAIL
+  SMS
+}
+
+// ─── Academic Reports (Module 5) ────────────────────────────────────
+
+model AcademicReport {
+  id            String        @id @default(cuid())
+  title         String
+  type          ReportType
+  scope         ReportScope
+  scopeId       String        // Student, Section, or School ID
+  generatedById String?       // Teacher/Admin who generated
+  parameters    Json?         // Report configuration
+  data          Json?         // Cached report data
+  format        ReportFormat  @default(JSON)
+  status        ReportStatus  @default(PENDING)
+  schoolId      String
+  createdAt     DateTime      @default(now())
+  completedAt   DateTime?
+
+  @@index([type, scope])
+  @@index([scopeId])
+  @@index([schoolId])
+  @@index([status])
+}
+
+enum ReportType {
+  GRADE_DISTRIBUTION
+  ATTENDANCE_SUMMARY
+  PERFORMANCE_TREND
+  INTERVENTION_EFFECTIVENESS
+  AT_RISK_IDENTIFICATION
+  SECTION_COMPARISON
+  STUDENT_PROGRESS
+  COMPLIANCE_STATUS
+}
+
+enum ReportScope {
+  STUDENT
+  SECTION
+  SCHOOL
+  DISTRICT
+}
+
+enum ReportFormat {
+  JSON
+  CSV
+  PDF
+}
+
+enum ReportStatus {
+  PENDING
+  GENERATING
+  COMPLETED
+  FAILED
 }
