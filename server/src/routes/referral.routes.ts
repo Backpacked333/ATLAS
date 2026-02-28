@@ -25,7 +25,7 @@ router.get(
   verifyStudentAccess,
   async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     try {
-      const data = await getReferralPrePopulatedData(req.teacher!.id, req.params.studentId);
+      const data = await getReferralPrePopulatedData(req.teacher!.id, String(req.params.studentId));
       res.json(data);
     } catch (error) {
       next(error);

@@ -53,7 +53,9 @@ export async function authenticateTeacher(
 }
 
 export function generateToken(teacherId: string): string {
+  // Default 8 hours in seconds; env var can override with seconds
+  const expiry = process.env.JWT_EXPIRY ? Number(process.env.JWT_EXPIRY) : 28800;
   return jwt.sign({ teacherId }, JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRY || '8h',
+    expiresIn: expiry,
   });
 }
