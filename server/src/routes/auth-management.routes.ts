@@ -1,6 +1,7 @@
 import { Router, Response, NextFunction } from 'express';
 import { AuthenticatedRequest } from '../types';
 import { authenticateTeacher } from '../middleware/auth';
+import { ForbiddenError } from '../utils/errors';
 import {
   getActiveSessions,
   terminateSession,
@@ -62,10 +63,22 @@ router.put('/sessions/:sessionId/terminate', authenticateTeacher, async (req: Au
 /**
  * POST /api/auth-management/sessions/terminate-all
  * Terminate all sessions for a user.
+ * Only allows terminating own sessions or requires admin permission.
  */
 router.post('/sessions/terminate-all', authenticateTeacher, async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   try {
-    const result = await terminateAllUserSessions(req.body.userId);
+    const targetUserId = req.body.userId;
+    const requestingTeacherId = req.teacher?.id;
+
+    // Verify that the requesting teacher is either terminating their own sessions
+    // or has explicit permission to terminate other users' sessions
+    if (targetUserId !== requestingTeacherId) {
+      // TODO: Check if teacher has admin permission on auth-management resource
+      // For now, prevent any teacher from terminating sessions for other users
+      throw new ForbiddenError('You can only terminate your own sessions');
+    }
+
+    const result = await terminateAllUserSessions(targetUserId);
     res.json(result);
   } catch (error) {
     next(error);
@@ -172,10 +185,22 @@ router.get('/mfa', authenticateTeacher, async (req: AuthenticatedRequest, res: R
 /**
  * POST /api/auth-management/mfa/enroll
  * Enroll in MFA.
+ * Only allows enrolling own MFA or requires admin permission.
  */
 router.post('/mfa/enroll', authenticateTeacher, async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   try {
-    const enrollment = await enrollMfa(req.body.userId, req.body.method);
+    const targetUserId = req.body.userId;
+    const requestingTeacherId = req.teacher?.id;
+
+    // Verify that the requesting teacher is either enrolling their own MFA
+    // or has explicit permission to enroll other users in MFA
+    if (targetUserId !== requestingTeacherId) {
+      // TODO: Check if teacher has admin permission on auth-management resource
+      // For now, prevent any teacher from enrolling other users in MFA
+      throw new ForbiddenError('You can only enroll yourself in MFA');
+    }
+
+    const enrollment = await enrollMfa(targetUserId, req.body.method);
     res.status(201).json(enrollment);
   } catch (error) {
     next(error);
@@ -185,10 +210,22 @@ router.post('/mfa/enroll', authenticateTeacher, async (req: AuthenticatedRequest
 /**
  * POST /api/auth-management/mfa/verify
  * Verify MFA enrollment.
+ * Only allows verifying own MFA or requires admin permission.
  */
 router.post('/mfa/verify', authenticateTeacher, async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   try {
-    const enrollment = await verifyMfa(req.body.userId, req.body.method);
+    const targetUserId = req.body.userId;
+    const requestingTeacherId = req.teacher?.id;
+
+    // Verify that the requesting teacher is either verifying their own MFA
+    // or has explicit permission to verify other users' MFA
+    if (targetUserId !== requestingTeacherId) {
+      // TODO: Check if teacher has admin permission on auth-management resource
+      // For now, prevent any teacher from verifying other users' MFA
+      throw new ForbiddenError('You can only verify your own MFA enrollment');
+    }
+
+    const enrollment = await verifyMfa(targetUserId, req.body.method);
     res.json(enrollment);
   } catch (error) {
     next(error);
