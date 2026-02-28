@@ -13,6 +13,12 @@ import { TasksPage } from './pages/TasksPage';
 import { CompliancePage } from './pages/CompliancePage';
 import { AlertsPage } from './pages/AlertsPage';
 import { IntegrationsPage } from './pages/IntegrationsPage';
+import { AccessControlPage } from './pages/AccessControlPage';
+import { AuditLogPage } from './pages/AuditLogPage';
+import { ReportsPage } from './pages/ReportsPage';
+import { MobileSettingsPage } from './pages/MobileSettingsPage';
+import { ApiGatewayPage } from './pages/ApiGatewayPage';
+import { DatabaseAdminPage } from './pages/DatabaseAdminPage';
 
 export default function App() {
   return (
@@ -32,6 +38,12 @@ export default function App() {
           <Route path="/compliance" element={<CompliancePage />} />
           <Route path="/alerts" element={<AlertsPage />} />
           <Route path="/integrations" element={<IntegrationsPage />} />
+          <Route path="/access-control" element={<AccessControlPage />} />
+          <Route path="/audit-log" element={<AuditLogPage />} />
+          <Route path="/reports" element={<ReportsPage />} />
+          <Route path="/mobile-settings" element={<MobileSettingsPage />} />
+          <Route path="/api-gateway" element={<ApiGatewayPage />} />
+          <Route path="/database" element={<DatabaseAdminPage />} />
         </Route>
       </Routes>
     </AuthProvider>

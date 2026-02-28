@@ -432,3 +432,120 @@ export interface IntegrationSummary {
   failedSyncsLast24h: number;
   connectorsByType: { type: string; count: number }[];
 }
+
+// ─── User Access Control (Module 13) ────────────────────────────────
+
+export interface Role {
+  id: string;
+  name: string;
+  description: string | null;
+  isSystem: boolean;
+  permissions: { permission: { id: string; resource: string; action: string } }[];
+  _count: { assignments: number };
+}
+
+// ─── Audit Logging (Module 14) ──────────────────────────────────────
+
+export interface AuditLogEntry {
+  id: string;
+  userId: string | null;
+  userEmail: string | null;
+  action: string;
+  resource: string;
+  resourceId: string | null;
+  details: string | null;
+  status: string;
+  createdAt: string;
+}
+
+export interface AuditSummary {
+  totalLast24h: number;
+  failuresLast24h: number;
+  deniedLast24h: number;
+  totalLast7d: number;
+  topActions: { action: string; count: number }[];
+}
+
+// ─── Reporting Analytics (Module 15) ────────────────────────────────
+
+export interface ReportDefinition {
+  id: string;
+  name: string;
+  description: string | null;
+  type: string;
+  isActive: boolean;
+  lastRunAt: string | null;
+  createdAt: string;
+  createdBy: { firstName: string; lastName: string };
+  _count: { snapshots: number };
+}
+
+export interface ReportSnapshot {
+  id: string;
+  data: string;
+  format: string;
+  recordCount: number;
+  generatedAt: string;
+}
+
+// ─── Mobile Support (Module 16) ─────────────────────────────────────
+
+export interface DeviceRegistration {
+  id: string;
+  deviceToken: string;
+  platform: string;
+  deviceName: string | null;
+  isActive: boolean;
+  lastActiveAt: string;
+}
+
+export interface MobilePreference {
+  pushNotificationsEnabled: boolean;
+  alertSound: boolean;
+  quietHoursStart: string | null;
+  quietHoursEnd: string | null;
+  dataSaverMode: boolean;
+  offlineCacheEnabled: boolean;
+}
+
+// ─── API Gateway (Module 17) ────────────────────────────────────────
+
+export interface ApiKeyInfo {
+  id: string;
+  name: string;
+  prefix: string;
+  scopes: string;
+  isActive: boolean;
+  expiresAt: string | null;
+  lastUsedAt: string | null;
+  rateLimitPerMinute: number;
+  createdAt: string;
+}
+
+export interface ApiStats {
+  totalRequests24h: number;
+  errorRate: number;
+  avgResponseTime: number;
+  requestsByMethod: { method: string; count: number }[];
+}
+
+// ─── Database Architecture (Module 18) ──────────────────────────────
+
+export interface DatabaseSummary {
+  health: {
+    status: string;
+    responseTimeMs: number;
+    checkedAt: string;
+  } | null;
+  migrations: {
+    total: number;
+    pending: number;
+  };
+  recentBackups: {
+    id: string;
+    type: string;
+    status: string;
+    sizeBytes: number | null;
+    completedAt: string | null;
+  }[];
+}

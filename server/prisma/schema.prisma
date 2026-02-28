@@ -40,6 +40,9 @@ model School {
   alertRules    AlertRule[]
   alerts        Alert[]
   integrationConnectors IntegrationConnector[]
+  roles         Role[]
+  reportDefinitions ReportDefinition[]
+  apiKeys       ApiKey[]
 
   @@index([districtId])
 }
@@ -72,6 +75,10 @@ model Teacher {
   tasksCreated       Task[]              @relation("TasksCreated")
   tasksAssigned      Task[]              @relation("TasksAssigned")
   alertRulesCreated  AlertRule[]         @relation("AlertRulesCreated")
+  roleAssignments    UserRoleAssignment[]
+  reportsCreated     ReportDefinition[]  @relation("ReportsCreated")
+  deviceRegistrations DeviceRegistration[]
+  mobilePreference   MobilePreference?
 
   @@index([schoolId])
   @@index([email])
@@ -894,6 +901,296 @@ enum SyncStatus {
   COMPLETED
   COMPLETED_WITH_ERRORS
   FAILED
+}
+
+// ─── User Access Control (Module 13) ─────────────────────────────────
+
+model Role {
+  id          String   @id @default(cuid())
+  schoolId    String
+  name        String
+  description String?
+  isSystem    Boolean  @default(false) // System roles can't be deleted
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  school      School             @relation(fields: [schoolId], references: [id])
+  permissions RolePermission[]
+  assignments UserRoleAssignment[]
+
+  @@unique([schoolId, name])
+  @@index([schoolId])
+}
+
+model Permission {
+  id          String   @id @default(cuid())
+  resource    String   // e.g. "students", "cases", "reports", "settings"
+  action      String   // e.g. "read", "write", "delete", "admin"
+  description String?
+  createdAt   DateTime @default(now())
+
+  roles RolePermission[]
+
+  @@unique([resource, action])
+}
+
+model RolePermission {
+  id           String @id @default(cuid())
+  roleId       String
+  permissionId String
+
+  role       Role       @relation(fields: [roleId], references: [id])
+  permission Permission @relation(fields: [permissionId], references: [id])
+
+  @@unique([roleId, permissionId])
+  @@index([roleId])
+  @@index([permissionId])
+}
+
+model UserRoleAssignment {
+  id        String   @id @default(cuid())
+  teacherId String
+  roleId    String
+  grantedBy String?
+  grantedAt DateTime @default(now())
+  expiresAt DateTime?
+
+  teacher Teacher @relation(fields: [teacherId], references: [id])
+  role    Role    @relation(fields: [roleId], references: [id])
+
+  @@unique([teacherId, roleId])
+  @@index([teacherId])
+  @@index([roleId])
+}
+
+// ─── Audit Logging (Module 14) ──────────────────────────────────────
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  schoolId    String
+  userId      String?
+  userEmail   String?
+  action      String   // e.g. "LOGIN", "VIEW_STUDENT", "CREATE_CASE", "UPDATE_GRADE"
+  resource    String   // e.g. "student", "case", "task", "report"
+  resourceId  String?
+  details     String?  // JSON with additional context
+  ipAddress   String?
+  userAgent   String?
+  status      AuditStatus @default(SUCCESS)
+  createdAt   DateTime @default(now())
+
+  @@index([schoolId])
+  @@index([userId])
+  @@index([action])
+  @@index([resource])
+  @@index([createdAt])
+  @@index([status])
+}
+
+enum AuditStatus {
+  SUCCESS
+  FAILURE
+  DENIED
+}
+
+// ─── Reporting Analytics (Module 15) ─────────────────────────────────
+
+model ReportDefinition {
+  id          String       @id @default(cuid())
+  schoolId    String
+  createdById String
+  name        String
+  description String?
+  type        ReportType
+  config      String       // JSON config: filters, columns, grouping
+  schedule    String?      // Cron-like schedule for automated reports
+  isActive    Boolean      @default(true)
+  lastRunAt   DateTime?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  school    School          @relation(fields: [schoolId], references: [id])
+  createdBy Teacher         @relation("ReportsCreated", fields: [createdById], references: [id])
+  snapshots ReportSnapshot[]
+
+  @@index([schoolId])
+  @@index([createdById])
+  @@index([type])
+}
+
+enum ReportType {
+  ATTENDANCE_SUMMARY
+  GRADE_DISTRIBUTION
+  INTERVENTION_PROGRESS
+  BEHAVIOR_TRENDS
+  COMPLIANCE_STATUS
+  STUDENT_RISK
+  CUSTOM
+}
+
+model ReportSnapshot {
+  id                 String   @id @default(cuid())
+  reportDefinitionId String
+  generatedById      String?
+  data               String   // JSON report data
+  format             String   @default("JSON") // JSON, CSV, PDF
+  recordCount        Int      @default(0)
+  generatedAt        DateTime @default(now())
+
+  reportDefinition ReportDefinition @relation(fields: [reportDefinitionId], references: [id])
+
+  @@index([reportDefinitionId])
+  @@index([generatedAt])
+}
+
+// ─── Mobile Support (Module 16) ──────────────────────────────────────
+
+model DeviceRegistration {
+  id          String   @id @default(cuid())
+  teacherId   String
+  deviceToken String
+  platform    DevicePlatform
+  deviceName  String?
+  isActive    Boolean  @default(true)
+  lastActiveAt DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  teacher Teacher @relation(fields: [teacherId], references: [id])
+
+  @@unique([teacherId, deviceToken])
+  @@index([teacherId])
+  @@index([platform])
+}
+
+enum DevicePlatform {
+  IOS
+  ANDROID
+  WEB
+}
+
+model MobilePreference {
+  id                    String  @id @default(cuid())
+  teacherId             String  @unique
+  pushNotificationsEnabled Boolean @default(true)
+  alertSound            Boolean @default(true)
+  quietHoursStart       String? // e.g. "22:00"
+  quietHoursEnd         String? // e.g. "07:00"
+  dataSaverMode         Boolean @default(false)
+  offlineCacheEnabled   Boolean @default(true)
+
+  teacher Teacher @relation(fields: [teacherId], references: [id])
+}
+
+// ─── API Gateway (Module 17) ────────────────────────────────────────
+
+model ApiKey {
+  id          String   @id @default(cuid())
+  schoolId    String
+  name        String
+  keyHash     String   @unique // Hashed API key
+  prefix      String   // First 8 chars for identification
+  scopes      String   // Comma-separated scopes: "read:students,write:grades"
+  isActive    Boolean  @default(true)
+  expiresAt   DateTime?
+  lastUsedAt  DateTime?
+  rateLimitPerMinute Int @default(60)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  school School @relation(fields: [schoolId], references: [id])
+
+  @@index([schoolId])
+  @@index([keyHash])
+  @@index([isActive])
+}
+
+model ApiRequestLog {
+  id          String   @id @default(cuid())
+  apiKeyId    String?
+  method      String   // GET, POST, PUT, DELETE
+  path        String
+  statusCode  Int
+  responseTime Int     // milliseconds
+  ipAddress   String?
+  createdAt   DateTime @default(now())
+
+  @@index([apiKeyId])
+  @@index([path])
+  @@index([createdAt])
+  @@index([statusCode])
+}
+
+// ─── Database Architecture (Module 18) ──────────────────────────────
+
+model DatabaseMigration {
+  id          String   @id @default(cuid())
+  version     String   @unique
+  name        String
+  description String?
+  status      MigrationStatus @default(PENDING)
+  appliedAt   DateTime?
+  rolledBackAt DateTime?
+  checksum    String?
+  createdAt   DateTime @default(now())
+
+  @@index([status])
+  @@index([appliedAt])
+}
+
+enum MigrationStatus {
+  PENDING
+  APPLIED
+  ROLLED_BACK
+  FAILED
+}
+
+model DatabaseHealthCheck {
+  id             String   @id @default(cuid())
+  component      String   // e.g. "primary_db", "read_replica", "cache"
+  status         HealthStatus
+  responseTimeMs Int
+  details        String?  // JSON with diagnostic info
+  checkedAt      DateTime @default(now())
+
+  @@index([component])
+  @@index([status])
+  @@index([checkedAt])
+}
+
+enum HealthStatus {
+  HEALTHY
+  DEGRADED
+  UNHEALTHY
+}
+
+model BackupRecord {
+  id          String       @id @default(cuid())
+  type        BackupType
+  status      BackupStatus @default(IN_PROGRESS)
+  sizeBytes   BigInt?
+  location    String?     // e.g. S3 path
+  startedAt   DateTime    @default(now())
+  completedAt DateTime?
+  expiresAt   DateTime?
+  errorMessage String?
+
+  @@index([type])
+  @@index([status])
+  @@index([startedAt])
+}
+
+enum BackupType {
+  FULL
+  INCREMENTAL
+  SNAPSHOT
+}
+
+enum BackupStatus {
+  IN_PROGRESS
+  COMPLETED
+  FAILED
+  EXPIRED
 }
 
 // ─── AI Conversations ─────────────────────────────────────────────────

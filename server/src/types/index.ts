@@ -313,3 +313,68 @@ export interface StartSyncInput {
   direction: 'INBOUND' | 'OUTBOUND' | 'BIDIRECTIONAL';
   entityType: string;
 }
+
+// ─── User Access Control System (Module 13) ─────────────────────────
+
+export interface CreateRoleInput {
+  name: string;
+  description?: string;
+}
+
+// ─── Audit Logging Module (Module 14) ───────────────────────────────
+
+export interface AuditLogFilters {
+  userId?: string;
+  action?: string;
+  resource?: string;
+  status?: string;
+  startDate?: string;
+  endDate?: string;
+  limit?: number;
+  offset?: number;
+}
+
+// ─── Reporting Analytics Engine (Module 15) ─────────────────────────
+
+export interface CreateReportInput {
+  name: string;
+  description?: string;
+  type: 'ATTENDANCE_SUMMARY' | 'GRADE_DISTRIBUTION' | 'INTERVENTION_PROGRESS' | 'BEHAVIOR_TRENDS' | 'COMPLIANCE_STATUS' | 'STUDENT_RISK' | 'CUSTOM';
+  config: string;
+  schedule?: string;
+}
+
+// ─── Mobile Support Module (Module 16) ──────────────────────────────
+
+export interface RegisterDeviceInput {
+  deviceToken: string;
+  platform: 'IOS' | 'ANDROID' | 'WEB';
+  deviceName?: string;
+}
+
+export interface MobilePreferencesInput {
+  pushNotificationsEnabled?: boolean;
+  alertSound?: boolean;
+  quietHoursStart?: string;
+  quietHoursEnd?: string;
+  dataSaverMode?: boolean;
+  offlineCacheEnabled?: boolean;
+}
+
+// ─── API Gateway System (Module 17) ─────────────────────────────────
+
+export interface CreateApiKeyInput {
+  name: string;
+  scopes: string;
+  expiresAt?: string;
+  rateLimitPerMinute?: number;
+}
+
+// ─── Database Architecture (Module 18) ──────────────────────────────
+
+export interface RecordMigrationInput {
+  version: string;
+  name: string;
+  description?: string;
+  checksum?: string;
+}

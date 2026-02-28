@@ -20,6 +20,12 @@ import taskAssignmentRoutes from './routes/task-assignment.routes';
 import policyComplianceRoutes from './routes/policy-compliance.routes';
 import alertRoutes from './routes/alert.routes';
 import dataIntegrationRoutes from './routes/data-integration.routes';
+import accessControlRoutes from './routes/access-control.routes';
+import auditLoggingRoutes from './routes/audit-logging.routes';
+import reportingRoutes from './routes/reporting.routes';
+import mobileSupportRoutes from './routes/mobile-support.routes';
+import apiGatewayRoutes from './routes/api-gateway.routes';
+import databaseAdminRoutes from './routes/database-admin.routes';
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -60,6 +66,12 @@ app.use('/api/tasks', taskAssignmentRoutes);
 app.use('/api/compliance', policyComplianceRoutes);
 app.use('/api/alerts', alertRoutes);
 app.use('/api/integrations', dataIntegrationRoutes);
+app.use('/api/access-control', accessControlRoutes);
+app.use('/api/audit', auditLoggingRoutes);
+app.use('/api/reports', reportingRoutes);
+app.use('/api/mobile', mobileSupportRoutes);
+app.use('/api/gateway', apiGatewayRoutes);
+app.use('/api/database', databaseAdminRoutes);
 
 // Health check
 app.get('/api/health', (_req, res) => {
