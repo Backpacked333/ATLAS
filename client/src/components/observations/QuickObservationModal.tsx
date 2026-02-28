@@ -36,6 +36,7 @@ export function QuickObservationModal({ studentId, studentName, onClose, onSaved
   const [severity, setSeverity] = useState<ObservationSeverity>('CONCERN');
   const [content, setContent] = useState('');
   const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
   const [error, setError] = useState('');
 
   async function handleSave() {
@@ -53,7 +54,8 @@ export function QuickObservationModal({ studentId, studentName, onClose, onSaved
       };
 
       await api.post('/observations', input);
-      onSaved();
+      setSaved(true);
+      setTimeout(() => onSaved(), 600);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to save');
       setSaving(false);
@@ -137,10 +139,21 @@ export function QuickObservationModal({ studentId, studentName, onClose, onSaved
         {/* Save button - prominent */}
         <button
           onClick={handleSave}
-          disabled={saving || !content.trim()}
-          className="btn-primary w-full py-3 text-base"
+          disabled={saving || saved || !content.trim()}
+          className={`w-full py-3 text-base rounded-md font-medium transition-all ${
+            saved
+              ? 'bg-green-600 text-white'
+              : 'btn-primary'
+          }`}
         >
-          {saving ? 'Saving...' : 'Save Observation'}
+          {saved ? (
+            <span className="flex items-center justify-center gap-2">
+              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+              Saved
+            </span>
+          ) : saving ? 'Saving...' : 'Save Observation'}
         </button>
 
         {severity === 'URGENT' && (

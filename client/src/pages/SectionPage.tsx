@@ -55,22 +55,37 @@ export function SectionPage() {
       {/* Summary Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="card p-4">
-          <p className="text-xs text-gray-500 uppercase">Class Average</p>
-          <p className="text-2xl font-bold text-gray-900">{section.classAverageGrade}%</p>
+          <p className="text-xs text-gray-500 uppercase font-medium">Class Average</p>
+          <div className="flex items-baseline gap-2">
+            <p className="text-2xl font-bold text-gray-900">{section.classAverageGrade}%</p>
+            {section.weekOverWeekGradeChange !== 0 && (
+              <span className={`text-xs font-medium ${section.weekOverWeekGradeChange > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                {section.weekOverWeekGradeChange > 0 ? '+' : ''}{section.weekOverWeekGradeChange}%
+              </span>
+            )}
+          </div>
         </div>
         <div className="card p-4">
-          <p className="text-xs text-gray-500 uppercase">Attendance</p>
-          <p className="text-2xl font-bold text-gray-900">{section.classAverageAttendance}%</p>
+          <p className="text-xs text-gray-500 uppercase font-medium">Attendance</p>
+          <div className="flex items-baseline gap-2">
+            <p className="text-2xl font-bold text-gray-900">{section.classAverageAttendance}%</p>
+            {section.weekOverWeekAttendanceChange !== 0 && (
+              <span className={`text-xs font-medium ${section.weekOverWeekAttendanceChange > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                {section.weekOverWeekAttendanceChange > 0 ? '+' : ''}{section.weekOverWeekAttendanceChange}%
+              </span>
+            )}
+          </div>
         </div>
         <div className="card p-4">
-          <p className="text-xs text-gray-500 uppercase">Failing</p>
-          <p className={`text-2xl font-bold ${section.failingCount > 0 ? 'text-red-600' : 'text-gray-900'}`}>
+          <p className="text-xs text-gray-500 uppercase font-medium">Failing</p>
+          <p className={`text-2xl font-bold ${section.failingCount > 0 ? 'text-red-600' : 'text-green-600'}`}>
             {section.failingCount}
           </p>
+          <p className="text-xs text-gray-400">{section.studentCount - section.failingCount} on track</p>
         </div>
         <div className="card p-4">
-          <p className="text-xs text-gray-500 uppercase">Missing Work</p>
-          <p className={`text-2xl font-bold ${section.missingWorkCount > 0 ? 'text-amber-600' : 'text-gray-900'}`}>
+          <p className="text-xs text-gray-500 uppercase font-medium">Missing Work</p>
+          <p className={`text-2xl font-bold ${section.missingWorkCount > 0 ? 'text-amber-600' : 'text-green-600'}`}>
             {section.missingWorkCount}
           </p>
         </div>
