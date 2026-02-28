@@ -36,6 +36,27 @@ export function AppLayout() {
   const navItems = [
     { path: '/briefing', label: 'Morning Briefing', icon: '☀' },
     { path: '/roster', label: 'My Students', icon: '👥' },
+    { path: '/cases', label: 'Cases', icon: '📋' },
+    { path: '/tasks', label: 'Tasks', icon: '✓' },
+    { path: '/alerts', label: 'Alerts', icon: '⚡' },
+    { path: '/reports', label: 'Reports', icon: '📊' },
+  ];
+
+  const adminNavItems = [
+    { path: '/access-control', label: 'Access Control', icon: '🔐' },
+    { path: '/auth-management', label: 'Auth & Sessions', icon: '🔑' },
+    { path: '/audit-log', label: 'Audit Log', icon: '📝' },
+    { path: '/compliance', label: 'Compliance', icon: '🛡' },
+    { path: '/encryption', label: 'Encryption', icon: '🔒' },
+    { path: '/integrations', label: 'Integrations', icon: '🔗' },
+    { path: '/api-gateway', label: 'API Gateway', icon: '🌐' },
+    { path: '/mobile-settings', label: 'Mobile', icon: '📱' },
+    { path: '/database', label: 'Database', icon: '🗄' },
+    { path: '/performance', label: 'Performance', icon: '⚡' },
+    { path: '/monitoring', label: 'Monitoring', icon: '📡' },
+    { path: '/backup-recovery', label: 'Backups', icon: '💾' },
+    { path: '/disaster-recovery', label: 'DR Plans', icon: '🔄' },
+    { path: '/tenants', label: 'Tenants', icon: '🏢' },
   ];
 
   const isActive = (path: string) => location.pathname === path;
@@ -79,6 +100,24 @@ export function AppLayout() {
             >
               <span className="text-xs bg-gray-200 rounded px-1.5 py-0.5">{section.period}</span>
               {section.courseName}
+            </Link>
+          ))}
+
+          <div className="pt-4 pb-2 px-3">
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Administration</p>
+          </div>
+          {adminNavItems.map((item) => (
+            <Link
+              key={item.path}
+              to={item.path}
+              className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors ${
+                isActive(item.path)
+                  ? 'bg-blue-50 text-atlas-primary'
+                  : 'text-gray-600 hover:bg-gray-100'
+              }`}
+            >
+              <span>{item.icon}</span>
+              {item.label}
             </Link>
           ))}
         </nav>

@@ -226,3 +226,281 @@ export interface AIAssistantRequest {
   studentId?: string;
   conversationId?: string;
 }
+
+// ─── Case Management Engine (Module 8) ─────────────────────────────
+
+export interface CreateCaseInput {
+  studentId: string;
+  type: 'ACADEMIC' | 'BEHAVIORAL' | 'ATTENDANCE' | 'SOCIAL_EMOTIONAL' | 'SST' | 'HEALTH' | 'OTHER';
+  priority?: 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
+  title: string;
+  description: string;
+  assignedToId?: string;
+}
+
+export interface CaseFilters {
+  status?: string;
+  type?: string;
+  priority?: string;
+  assignedToId?: string;
+  studentId?: string;
+}
+
+// ─── Task Assignment System (Module 9) ──────────────────────────────
+
+export interface CreateTaskInput {
+  title: string;
+  description?: string;
+  category: 'FOLLOW_UP' | 'PARENT_CONTACT' | 'DOCUMENTATION' | 'MEETING' | 'INTERVENTION' | 'REFERRAL' | 'ASSESSMENT' | 'OTHER';
+  priority?: 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
+  assignedToId?: string;
+  studentId?: string;
+  caseId?: string;
+  dueDate?: string;
+}
+
+export interface TaskFilters {
+  status?: string;
+  category?: string;
+  priority?: string;
+  overdueOnly?: boolean;
+}
+
+// ─── Policy Compliance Monitor (Module 10) ──────────────────────────
+
+export interface CreatePolicyRuleInput {
+  name: string;
+  description: string;
+  category: 'ATTENDANCE' | 'GRADING' | 'BEHAVIORAL' | 'DATA_PRIVACY' | 'ACCOMMODATION' | 'REPORTING';
+  threshold?: string;
+}
+
+export interface RecordViolationInput {
+  policyRuleId: string;
+  studentId?: string;
+  teacherId?: string;
+  severity: 'INFO' | 'WARNING' | 'CRITICAL';
+  description: string;
+}
+
+// ─── Real-time Alert System (Module 11) ─────────────────────────────
+
+export interface CreateAlertRuleInput {
+  name: string;
+  description?: string;
+  category: 'ATTENDANCE_ALERT' | 'GRADE_ALERT' | 'BEHAVIOR_ALERT' | 'SAFETY_ALERT' | 'SYSTEM_ALERT' | 'CUSTOM';
+  condition: string;
+  channels?: string;
+  priority?: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+}
+
+export interface AlertFilters {
+  status?: string;
+  priority?: string;
+  limit?: number;
+}
+
+// ─── Data Integration Framework (Module 12) ─────────────────────────
+
+export interface CreateConnectorInput {
+  name: string;
+  provider: string;
+  type: 'SIS' | 'LMS' | 'ASSESSMENT' | 'IDENTITY' | 'COMMUNICATION';
+  config: string;
+}
+
+export interface StartSyncInput {
+  direction: 'INBOUND' | 'OUTBOUND' | 'BIDIRECTIONAL';
+  entityType: string;
+}
+
+// ─── User Access Control System (Module 13) ─────────────────────────
+
+export interface CreateRoleInput {
+  name: string;
+  description?: string;
+}
+
+// ─── Audit Logging Module (Module 14) ───────────────────────────────
+
+export interface AuditLogFilters {
+  userId?: string;
+  action?: string;
+  resource?: string;
+  status?: string;
+  startDate?: string;
+  endDate?: string;
+  limit?: number;
+  offset?: number;
+}
+
+// ─── Reporting Analytics Engine (Module 15) ─────────────────────────
+
+export interface CreateReportInput {
+  name: string;
+  description?: string;
+  type: 'ATTENDANCE_SUMMARY' | 'GRADE_DISTRIBUTION' | 'INTERVENTION_PROGRESS' | 'BEHAVIOR_TRENDS' | 'COMPLIANCE_STATUS' | 'STUDENT_RISK' | 'CUSTOM';
+  config: string;
+  schedule?: string;
+}
+
+// ─── Mobile Support Module (Module 16) ──────────────────────────────
+
+export interface RegisterDeviceInput {
+  deviceToken: string;
+  platform: 'IOS' | 'ANDROID' | 'WEB';
+  deviceName?: string;
+}
+
+export interface MobilePreferencesInput {
+  pushNotificationsEnabled?: boolean;
+  alertSound?: boolean;
+  quietHoursStart?: string;
+  quietHoursEnd?: string;
+  dataSaverMode?: boolean;
+  offlineCacheEnabled?: boolean;
+}
+
+// ─── API Gateway System (Module 17) ─────────────────────────────────
+
+export interface CreateApiKeyInput {
+  name: string;
+  scopes: string;
+  expiresAt?: string;
+  rateLimitPerMinute?: number;
+}
+
+// ─── Database Architecture (Module 18) ──────────────────────────────
+
+export interface RecordMigrationInput {
+  version: string;
+  name: string;
+  description?: string;
+  checksum?: string;
+}
+
+// ─── Performance Optimization (Module 19) ────────────────────────────
+
+export interface RunBenchmarkInput {
+  name: string;
+  category: string;
+  targetMs: number;
+}
+
+// ─── Disaster Recovery (Module 20) ───────────────────────────────────
+
+export interface CreateRecoveryPlanInput {
+  name: string;
+  description?: string;
+  type: 'DATABASE_FAILURE' | 'APPLICATION_FAILURE' | 'NETWORK_FAILURE' | 'FULL_SITE_RECOVERY' | 'DATA_CORRUPTION' | 'RANSOMWARE';
+  priority?: number;
+  rtoMinutes: number;
+  rpoMinutes: number;
+  steps: string;
+}
+
+export interface CompleteRecoveryTestInput {
+  passed: boolean;
+  notes?: string;
+  issues?: string;
+}
+
+export interface InitiateFailoverInput {
+  sourceRegion: string;
+  targetRegion: string;
+  trigger: string;
+}
+
+// ─── Encryption Security (Module 21) ─────────────────────────────────
+
+export interface CreateEncryptionKeyInput {
+  alias: string;
+  algorithm: string;
+  purpose: 'DATA_ENCRYPTION' | 'TOKEN_SIGNING' | 'BACKUP_ENCRYPTION' | 'TRANSPORT' | 'API_SIGNING';
+  expiresAt?: string;
+}
+
+export interface RegisterEncryptedFieldInput {
+  tableName: string;
+  fieldName: string;
+  keyAlias: string;
+  encryptionType: string;
+}
+
+// ─── Multi-Tenancy (Module 22) ───────────────────────────────────────
+
+export interface CreateTenantInput {
+  name: string;
+  displayName: string;
+  domain?: string;
+  tier?: 'FREE' | 'STANDARD' | 'PREMIUM' | 'ENTERPRISE';
+  maxUsers?: number;
+  maxStorage?: number;
+  config?: string;
+}
+
+export interface SetResourceQuotaInput {
+  resourceType: string;
+  limitValue: number;
+  periodStart: string;
+  periodEnd: string;
+}
+
+// ─── Authentication Authorization (Module 23) ────────────────────────
+
+export interface CreatePasswordPolicyInput {
+  name: string;
+  minLength?: number;
+  requireUppercase?: boolean;
+  requireLowercase?: boolean;
+  requireNumbers?: boolean;
+  requireSpecial?: boolean;
+  maxAgeDays?: number;
+  historyCount?: number;
+  lockoutThreshold?: number;
+  lockoutDurationMinutes?: number;
+}
+
+// ─── Backup Recovery (Module 24) ─────────────────────────────────────
+
+export interface CreateScheduledBackupInput {
+  name: string;
+  type: 'FULL' | 'INCREMENTAL' | 'SNAPSHOT';
+  schedule: string;
+  retention?: number;
+  destination: string;
+}
+
+export interface CreateRetentionPolicyInput {
+  name: string;
+  backupType: 'FULL' | 'INCREMENTAL' | 'SNAPSHOT';
+  retentionDays: number;
+  maxCopies?: number;
+}
+
+// ─── Monitoring Alerting (Module 25) ─────────────────────────────────
+
+export interface RecordMetricInput {
+  name: string;
+  value: number;
+  unit: string;
+  host?: string;
+  tags?: string;
+}
+
+export interface CreateMonitoringAlertInput {
+  name: string;
+  metricName: string;
+  condition: string;
+  threshold: number;
+  severity?: 'INFO_M' | 'WARNING_M' | 'CRITICAL_M';
+  cooldownMinutes?: number;
+  notifyChannels?: string;
+}
+
+export interface CreateDashboardInput {
+  name: string;
+  description?: string;
+  layout: string;
+  isDefault?: boolean;
+}
