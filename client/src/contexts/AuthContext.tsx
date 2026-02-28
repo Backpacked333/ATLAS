@@ -33,8 +33,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    if (token) {
-      api.setToken(token);
+    const currentToken = localStorage.getItem('atlas_token');
+    if (currentToken) {
+      api.setToken(currentToken);
       api.get<{ id: string; email: string; firstName: string; lastName: string; photoUrl: string; school: { name: string }; sections: { id: string; courseName: string; period: string }[] }>('/auth/me')
         .then((data) => {
           setTeacher({
@@ -57,7 +58,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } else {
       setIsLoading(false);
     }
-  }, [token, isDemoMode]);
+  }, [isDemoMode]);
 
   const login = useCallback(async (email: string) => {
     const result = await api.post<{ token: string; teacher: Teacher }>('/auth/login', { email });
