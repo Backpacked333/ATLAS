@@ -8,6 +8,11 @@ import { SectionPage } from './pages/SectionPage';
 import { StudentProfilePage } from './pages/StudentProfilePage';
 import { ReferralPage } from './pages/ReferralPage';
 import { NotificationsPage } from './pages/NotificationsPage';
+import { CasesPage } from './pages/CasesPage';
+import { TasksPage } from './pages/TasksPage';
+import { CompliancePage } from './pages/CompliancePage';
+import { AlertsPage } from './pages/AlertsPage';
+import { IntegrationsPage } from './pages/IntegrationsPage';
 
 export default function App() {
   return (
@@ -22,6 +27,11 @@ export default function App() {
           <Route path="/students/:studentId" element={<StudentProfilePage />} />
           <Route path="/referrals/new/:studentId" element={<ReferralPage />} />
           <Route path="/notifications" element={<NotificationsPage />} />
+          <Route path="/cases" element={<CasesPage />} />
+          <Route path="/tasks" element={<TasksPage />} />
+          <Route path="/compliance" element={<CompliancePage />} />
+          <Route path="/alerts" element={<AlertsPage />} />
+          <Route path="/integrations" element={<IntegrationsPage />} />
         </Route>
       </Routes>
     </AuthProvider>

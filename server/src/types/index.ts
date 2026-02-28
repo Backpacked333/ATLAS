@@ -226,3 +226,90 @@ export interface AIAssistantRequest {
   studentId?: string;
   conversationId?: string;
 }
+
+// ─── Case Management Engine (Module 8) ─────────────────────────────
+
+export interface CreateCaseInput {
+  studentId: string;
+  type: 'ACADEMIC' | 'BEHAVIORAL' | 'ATTENDANCE' | 'SOCIAL_EMOTIONAL' | 'SST' | 'HEALTH' | 'OTHER';
+  priority?: 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
+  title: string;
+  description: string;
+  assignedToId?: string;
+}
+
+export interface CaseFilters {
+  status?: string;
+  type?: string;
+  priority?: string;
+  assignedToId?: string;
+  studentId?: string;
+}
+
+// ─── Task Assignment System (Module 9) ──────────────────────────────
+
+export interface CreateTaskInput {
+  title: string;
+  description?: string;
+  category: 'FOLLOW_UP' | 'PARENT_CONTACT' | 'DOCUMENTATION' | 'MEETING' | 'INTERVENTION' | 'REFERRAL' | 'ASSESSMENT' | 'OTHER';
+  priority?: 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
+  assignedToId?: string;
+  studentId?: string;
+  caseId?: string;
+  dueDate?: string;
+}
+
+export interface TaskFilters {
+  status?: string;
+  category?: string;
+  priority?: string;
+  overdueOnly?: boolean;
+}
+
+// ─── Policy Compliance Monitor (Module 10) ──────────────────────────
+
+export interface CreatePolicyRuleInput {
+  name: string;
+  description: string;
+  category: 'ATTENDANCE' | 'GRADING' | 'BEHAVIORAL' | 'DATA_PRIVACY' | 'ACCOMMODATION' | 'REPORTING';
+  threshold?: string;
+}
+
+export interface RecordViolationInput {
+  policyRuleId: string;
+  studentId?: string;
+  teacherId?: string;
+  severity: 'INFO' | 'WARNING' | 'CRITICAL';
+  description: string;
+}
+
+// ─── Real-time Alert System (Module 11) ─────────────────────────────
+
+export interface CreateAlertRuleInput {
+  name: string;
+  description?: string;
+  category: 'ATTENDANCE_ALERT' | 'GRADE_ALERT' | 'BEHAVIOR_ALERT' | 'SAFETY_ALERT' | 'SYSTEM_ALERT' | 'CUSTOM';
+  condition: string;
+  channels?: string;
+  priority?: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+}
+
+export interface AlertFilters {
+  status?: string;
+  priority?: string;
+  limit?: number;
+}
+
+// ─── Data Integration Framework (Module 12) ─────────────────────────
+
+export interface CreateConnectorInput {
+  name: string;
+  provider: string;
+  type: 'SIS' | 'LMS' | 'ASSESSMENT' | 'IDENTITY' | 'COMMUNICATION';
+  config: string;
+}
+
+export interface StartSyncInput {
+  direction: 'INBOUND' | 'OUTBOUND' | 'BIDIRECTIONAL';
+  entityType: string;
+}

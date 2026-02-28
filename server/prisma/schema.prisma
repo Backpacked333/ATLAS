@@ -33,6 +33,13 @@ model School {
   sections      Section[]
   counselors    Counselor[]
   notifications Notification[]
+  cases         Case[]
+  tasks         Task[]
+  policyRules   PolicyRule[]
+  complianceViolations ComplianceViolation[]
+  alertRules    AlertRule[]
+  alerts        Alert[]
+  integrationConnectors IntegrationConnector[]
 
   @@index([districtId])
 }
@@ -58,6 +65,13 @@ model Teacher {
   parentContacts     ParentContact[]
   notifications      Notification[]
   aiConversations    AIConversation[]
+  casesCreated       Case[]              @relation("CasesCreated")
+  casesAssigned      Case[]              @relation("CasesAssigned")
+  caseNotes          CaseNote[]
+  caseActivities     CaseActivity[]
+  tasksCreated       Task[]              @relation("TasksCreated")
+  tasksAssigned      Task[]              @relation("TasksAssigned")
+  alertRulesCreated  AlertRule[]         @relation("AlertRulesCreated")
 
   @@index([schoolId])
   @@index([email])
@@ -146,6 +160,7 @@ model Student {
   grades             Grade[]
   guardians          Guardian[]
   notifications      Notification[]
+  cases              Case[]
 
   @@index([schoolId])
   @@index([studentIdNo])
@@ -524,6 +539,361 @@ enum NotificationChannel {
   IN_APP
   EMAIL
   BOTH
+}
+
+// ─── Case Management ──────────────────────────────────────────────────
+
+model Case {
+  id           String       @id @default(cuid())
+  schoolId     String
+  studentId    String
+  createdById  String
+  assignedToId String?
+  type         CaseType
+  status       CaseStatus   @default(OPEN)
+  priority     CasePriority @default(MEDIUM)
+  title        String
+  description  String
+  resolution   String?
+  closedAt     DateTime?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  school     School      @relation(fields: [schoolId], references: [id])
+  student    Student     @relation(fields: [studentId], references: [id])
+  createdBy  Teacher     @relation("CasesCreated", fields: [createdById], references: [id])
+  assignedTo Teacher?    @relation("CasesAssigned", fields: [assignedToId], references: [id])
+  notes      CaseNote[]
+  activities CaseActivity[]
+
+  @@index([schoolId])
+  @@index([studentId])
+  @@index([createdById])
+  @@index([assignedToId])
+  @@index([status])
+  @@index([type])
+}
+
+enum CaseType {
+  ACADEMIC
+  BEHAVIORAL
+  ATTENDANCE
+  SOCIAL_EMOTIONAL
+  SST
+  HEALTH
+  OTHER
+}
+
+enum CaseStatus {
+  OPEN
+  IN_PROGRESS
+  PENDING_REVIEW
+  ESCALATED
+  RESOLVED
+  CLOSED
+}
+
+enum CasePriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+model CaseNote {
+  id        String   @id @default(cuid())
+  caseId    String
+  authorId  String
+  content   String
+  createdAt DateTime @default(now())
+
+  case   Case    @relation(fields: [caseId], references: [id])
+  author Teacher @relation(fields: [authorId], references: [id])
+
+  @@index([caseId])
+  @@index([authorId])
+}
+
+model CaseActivity {
+  id         String   @id @default(cuid())
+  caseId     String
+  performedById String
+  action     String   // e.g. "STATUS_CHANGED", "ASSIGNED", "NOTE_ADDED", "ESCALATED"
+  details    String?  // JSON or description of what changed
+  createdAt  DateTime @default(now())
+
+  case        Case    @relation(fields: [caseId], references: [id])
+  performedBy Teacher @relation(fields: [performedById], references: [id])
+
+  @@index([caseId])
+  @@index([performedById])
+  @@index([createdAt])
+}
+
+// ─── Task Assignment ──────────────────────────────────────────────────
+
+model Task {
+  id           String       @id @default(cuid())
+  schoolId     String
+  createdById  String
+  assignedToId String?
+  studentId    String?      // Optional link to a student
+  caseId       String?      // Optional link to a case
+  title        String
+  description  String?
+  category     TaskCategory
+  priority     TaskPriority @default(MEDIUM)
+  status       TaskStatus   @default(PENDING)
+  dueDate      DateTime?
+  completedAt  DateTime?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  school     School   @relation(fields: [schoolId], references: [id])
+  createdBy  Teacher  @relation("TasksCreated", fields: [createdById], references: [id])
+  assignedTo Teacher? @relation("TasksAssigned", fields: [assignedToId], references: [id])
+
+  @@index([schoolId])
+  @@index([createdById])
+  @@index([assignedToId])
+  @@index([status])
+  @@index([dueDate])
+  @@index([category])
+}
+
+enum TaskCategory {
+  FOLLOW_UP
+  PARENT_CONTACT
+  DOCUMENTATION
+  MEETING
+  INTERVENTION
+  REFERRAL
+  ASSESSMENT
+  OTHER
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum TaskStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  OVERDUE
+}
+
+// ─── Policy Compliance ────────────────────────────────────────────────
+
+model PolicyRule {
+  id          String          @id @default(cuid())
+  schoolId    String
+  name        String
+  description String
+  category    PolicyCategory
+  isActive    Boolean         @default(true)
+  threshold   String?         // JSON threshold config e.g. {"maxAbsences": 10}
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  school     School              @relation(fields: [schoolId], references: [id])
+  violations ComplianceViolation[]
+
+  @@index([schoolId])
+  @@index([category])
+  @@index([isActive])
+}
+
+enum PolicyCategory {
+  ATTENDANCE
+  GRADING
+  BEHAVIORAL
+  DATA_PRIVACY
+  ACCOMMODATION
+  REPORTING
+}
+
+model ComplianceViolation {
+  id           String            @id @default(cuid())
+  policyRuleId String
+  schoolId     String
+  studentId    String?
+  teacherId    String?
+  severity     ViolationSeverity
+  description  String
+  status       ViolationStatus   @default(OPEN)
+  resolvedById String?
+  resolvedAt   DateTime?
+  resolution   String?
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+
+  policyRule PolicyRule @relation(fields: [policyRuleId], references: [id])
+
+  @@index([policyRuleId])
+  @@index([schoolId])
+  @@index([studentId])
+  @@index([teacherId])
+  @@index([status])
+  @@index([severity])
+  @@index([createdAt])
+}
+
+enum ViolationSeverity {
+  INFO
+  WARNING
+  CRITICAL
+}
+
+enum ViolationStatus {
+  OPEN
+  ACKNOWLEDGED
+  IN_REMEDIATION
+  RESOLVED
+  DISMISSED
+}
+
+// ─── Real-time Alert System ──────────────────────────────────────────
+
+model AlertRule {
+  id          String          @id @default(cuid())
+  schoolId    String
+  createdById String
+  name        String
+  description String?
+  category    AlertCategory
+  condition   String          // JSON condition config
+  isActive    Boolean         @default(true)
+  channels    String          @default("IN_APP") // Comma-separated: IN_APP,EMAIL
+  priority    AlertPriority   @default(MEDIUM)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  school    School  @relation(fields: [schoolId], references: [id])
+  createdBy Teacher @relation("AlertRulesCreated", fields: [createdById], references: [id])
+  alerts    Alert[]
+
+  @@index([schoolId])
+  @@index([createdById])
+  @@index([category])
+  @@index([isActive])
+}
+
+enum AlertCategory {
+  ATTENDANCE_ALERT
+  GRADE_ALERT
+  BEHAVIOR_ALERT
+  SAFETY_ALERT
+  SYSTEM_ALERT
+  CUSTOM
+}
+
+enum AlertPriority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+model Alert {
+  id          String        @id @default(cuid())
+  alertRuleId String?
+  schoolId    String
+  teacherId   String?
+  studentId   String?
+  title       String
+  message     String
+  priority    AlertPriority @default(MEDIUM)
+  channel     String        @default("IN_APP")
+  status      AlertStatus   @default(ACTIVE)
+  acknowledgedById String?
+  acknowledgedAt   DateTime?
+  expiresAt   DateTime?
+  createdAt   DateTime      @default(now())
+
+  alertRule      AlertRule? @relation(fields: [alertRuleId], references: [id])
+
+  @@index([alertRuleId])
+  @@index([schoolId])
+  @@index([teacherId])
+  @@index([studentId])
+  @@index([status])
+  @@index([priority])
+  @@index([createdAt])
+}
+
+enum AlertStatus {
+  ACTIVE
+  ACKNOWLEDGED
+  RESOLVED
+  EXPIRED
+}
+
+// ─── Data Integration Framework ──────────────────────────────────────
+
+model IntegrationConnector {
+  id           String              @id @default(cuid())
+  schoolId     String
+  name         String
+  provider     String              // e.g. "PowerSchool", "Canvas", "Clever"
+  type         IntegrationType
+  config       String              // Encrypted JSON config (API keys, endpoints)
+  isActive     Boolean             @default(true)
+  lastSyncAt   DateTime?
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+
+  school   School         @relation(fields: [schoolId], references: [id])
+  syncLogs IntegrationSyncLog[]
+
+  @@index([schoolId])
+  @@index([type])
+  @@index([isActive])
+}
+
+enum IntegrationType {
+  SIS       // Student Information System
+  LMS       // Learning Management System
+  ASSESSMENT // Assessment platforms
+  IDENTITY  // SSO / Identity providers
+  COMMUNICATION // Parent communication
+}
+
+model IntegrationSyncLog {
+  id            String      @id @default(cuid())
+  connectorId   String
+  direction     SyncDirection
+  entityType    String      // e.g. "students", "grades", "attendance"
+  recordsTotal  Int         @default(0)
+  recordsSynced Int         @default(0)
+  recordsFailed Int         @default(0)
+  status        SyncStatus  @default(IN_PROGRESS)
+  errorLog      String?     // JSON array of errors
+  startedAt     DateTime    @default(now())
+  completedAt   DateTime?
+
+  connector IntegrationConnector @relation(fields: [connectorId], references: [id])
+
+  @@index([connectorId])
+  @@index([status])
+  @@index([startedAt])
+}
+
+enum SyncDirection {
+  INBOUND
+  OUTBOUND
+  BIDIRECTIONAL
+}
+
+enum SyncStatus {
+  IN_PROGRESS
+  COMPLETED
+  COMPLETED_WITH_ERRORS
+  FAILED
 }
 
 // ─── AI Conversations ─────────────────────────────────────────────────

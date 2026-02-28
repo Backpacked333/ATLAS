@@ -270,3 +270,165 @@ export interface Notification {
   createdAt: string;
   studentId?: string;
 }
+
+// ─── Case Management (Module 8) ─────────────────────────────────────
+
+export type CaseType = 'ACADEMIC' | 'BEHAVIORAL' | 'ATTENDANCE' | 'SOCIAL_EMOTIONAL' | 'SST' | 'HEALTH' | 'OTHER';
+export type CaseStatus = 'OPEN' | 'IN_PROGRESS' | 'PENDING_REVIEW' | 'ESCALATED' | 'RESOLVED' | 'CLOSED';
+export type CasePriority = 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
+
+export interface Case {
+  id: string;
+  studentId: string;
+  type: CaseType;
+  status: CaseStatus;
+  priority: CasePriority;
+  title: string;
+  description: string;
+  resolution?: string;
+  closedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+  student: { firstName: string; lastName: string };
+  assignedTo?: { firstName: string; lastName: string };
+}
+
+export interface CaseNote {
+  id: string;
+  content: string;
+  createdAt: string;
+  author: { firstName: string; lastName: string };
+}
+
+// ─── Task Assignment (Module 9) ─────────────────────────────────────
+
+export type TaskCategory = 'FOLLOW_UP' | 'PARENT_CONTACT' | 'DOCUMENTATION' | 'MEETING' | 'INTERVENTION' | 'REFERRAL' | 'ASSESSMENT' | 'OTHER';
+export type TaskPriority = 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
+export type TaskStatus = 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'OVERDUE';
+
+export interface Task {
+  id: string;
+  title: string;
+  description?: string;
+  category: TaskCategory;
+  priority: TaskPriority;
+  status: TaskStatus;
+  dueDate?: string;
+  completedAt?: string;
+  createdAt: string;
+  createdBy: { firstName: string; lastName: string };
+  assignedTo?: { firstName: string; lastName: string };
+}
+
+export interface TaskSummary {
+  pending: number;
+  inProgress: number;
+  overdue: number;
+  completedThisWeek: number;
+}
+
+// ─── Policy Compliance (Module 10) ──────────────────────────────────
+
+export type PolicyCategory = 'ATTENDANCE' | 'GRADING' | 'BEHAVIORAL' | 'DATA_PRIVACY' | 'ACCOMMODATION' | 'REPORTING';
+export type ViolationSeverity = 'INFO' | 'WARNING' | 'CRITICAL';
+export type ViolationStatus = 'OPEN' | 'ACKNOWLEDGED' | 'IN_REMEDIATION' | 'RESOLVED' | 'DISMISSED';
+
+export interface PolicyRule {
+  id: string;
+  name: string;
+  description: string;
+  category: PolicyCategory;
+  isActive: boolean;
+  threshold?: string;
+  _count: { violations: number };
+}
+
+export interface ComplianceViolation {
+  id: string;
+  severity: ViolationSeverity;
+  status: ViolationStatus;
+  description: string;
+  createdAt: string;
+  policyRule: { name: string; category: string };
+}
+
+export interface ComplianceSummary {
+  totalRules: number;
+  activeRules: number;
+  openViolations: number;
+  criticalViolations: number;
+  violationsBySeverity: { severity: string; count: number }[];
+}
+
+// ─── Real-time Alerts (Module 11) ───────────────────────────────────
+
+export type AlertCategory = 'ATTENDANCE_ALERT' | 'GRADE_ALERT' | 'BEHAVIOR_ALERT' | 'SAFETY_ALERT' | 'SYSTEM_ALERT' | 'CUSTOM';
+export type AlertPriority = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+export type AlertStatus = 'ACTIVE' | 'ACKNOWLEDGED' | 'RESOLVED' | 'EXPIRED';
+
+export interface Alert {
+  id: string;
+  title: string;
+  message: string;
+  priority: AlertPriority;
+  status: AlertStatus;
+  channel: string;
+  createdAt: string;
+  alertRule?: { name: string; category: string };
+}
+
+export interface AlertRule {
+  id: string;
+  name: string;
+  description?: string;
+  category: AlertCategory;
+  condition: string;
+  isActive: boolean;
+  channels: string;
+  priority: AlertPriority;
+  createdBy: { firstName: string; lastName: string };
+  _count: { alerts: number };
+}
+
+export interface AlertSummary {
+  active: number;
+  critical: number;
+  acknowledged: number;
+  total: number;
+}
+
+// ─── Data Integration (Module 12) ───────────────────────────────────
+
+export type IntegrationType = 'SIS' | 'LMS' | 'ASSESSMENT' | 'IDENTITY' | 'COMMUNICATION';
+export type SyncStatus = 'IN_PROGRESS' | 'COMPLETED' | 'COMPLETED_WITH_ERRORS' | 'FAILED';
+
+export interface IntegrationConnector {
+  id: string;
+  name: string;
+  provider: string;
+  type: IntegrationType;
+  isActive: boolean;
+  lastSyncAt?: string;
+  createdAt: string;
+  _count: { syncLogs: number };
+}
+
+export interface SyncLog {
+  id: string;
+  direction: string;
+  entityType: string;
+  recordsTotal: number;
+  recordsSynced: number;
+  recordsFailed: number;
+  status: SyncStatus;
+  startedAt: string;
+  completedAt?: string;
+}
+
+export interface IntegrationSummary {
+  totalConnectors: number;
+  activeConnectors: number;
+  recentSyncsLast24h: number;
+  failedSyncsLast24h: number;
+  connectorsByType: { type: string; count: number }[];
+}
