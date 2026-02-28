@@ -60,7 +60,7 @@ router.get(
 router.post(
   '/deadlines',
   authenticateTeacher,
-  requirePermission('accommodation', 'read'), // Teachers can view; creation typically by counselors/admin
+  requirePermission('compliance', 'create'),
   async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     try {
       const deadline = await SpecialEducationService.createDeadline(
@@ -81,6 +81,7 @@ router.post(
 router.patch(
   '/deadlines/:id',
   authenticateTeacher,
+  requirePermission('compliance', 'update'),
   async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     try {
       const deadline = await SpecialEducationService.updateDeadline(
@@ -120,6 +121,7 @@ router.get(
 router.post(
   '/documents',
   authenticateTeacher,
+  requirePermission('iep_document', 'create'),
   async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     try {
       const document = await SpecialEducationService.createDocument(
@@ -140,6 +142,7 @@ router.post(
 router.post(
   '/check-alerts',
   authenticateTeacher,
+  requirePermission('compliance', 'read'),
   async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     try {
       const alertCount = await SpecialEducationService.checkDeadlineAlerts(req.teacher!.schoolId);
