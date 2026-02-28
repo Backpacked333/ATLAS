@@ -37,10 +37,21 @@ router.get('/summary', authenticateTeacher, async (_req: AuthenticatedRequest, r
  * GET /api/auth-management/sessions
  * List active sessions.
  * Query: userId
+ * Authorization: Teachers can only view their own sessions.
  */
 router.get('/sessions', authenticateTeacher, async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   try {
-    const sessions = await getActiveSessions(req.query.userId as string | undefined);
+    const requestedUserId = req.query.userId as string | undefined;
+    
+    // Authorization check: teachers can only view their own sessions
+    // unless they are system administrators
+    if (requestedUserId && requestedUserId !== req.teacher!.id) {
+      throw new ForbiddenError('You can only view your own active sessions');
+    }
+    
+    // If no userId is provided, default to the requesting teacher's sessions
+    const userId = requestedUserId || req.teacher!.id;
+    const sessions = await getActiveSessions(userId);
     res.json(sessions);
   } catch (error) {
     next(error);
@@ -172,10 +183,21 @@ router.put('/password-policies/:policyId', authenticateTeacher, async (req: Auth
  * GET /api/auth-management/mfa
  * List MFA enrollments.
  * Query: userId
+ * Authorization: Teachers can only view their own MFA enrollments.
  */
 router.get('/mfa', authenticateTeacher, async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   try {
-    const enrollments = await getMfaEnrollments(req.query.userId as string | undefined);
+    const requestedUserId = req.query.userId as string | undefined;
+    
+    // Authorization check: teachers can only view their own MFA enrollments
+    // unless they are system administrators
+    if (requestedUserId && requestedUserId !== req.teacher!.id) {
+      throw new ForbiddenError('You can only view your own MFA enrollments');
+    }
+    
+    // If no userId is provided, default to the requesting teacher's MFA enrollments
+    const userId = requestedUserId || req.teacher!.id;
+    const enrollments = await getMfaEnrollments(userId);
     res.json(enrollments);
   } catch (error) {
     next(error);
@@ -194,13 +216,13 @@ router.post('/mfa/enroll', authenticateTeacher, async (req: AuthenticatedRequest
 
     // Verify that the requesting teacher is either enrolling their own MFA
     // or has explicit permission to enroll other users in MFA
-    if (targetUserId !== requestingTeacherId) {
+    if (targetUserId && targetUserId !== requestingTeacherId) {
       // TODO: Check if teacher has admin permission on auth-management resource
       // For now, prevent any teacher from enrolling other users in MFA
       throw new ForbiddenError('You can only enroll yourself in MFA');
     }
 
-    const enrollment = await enrollMfa(targetUserId, req.body.method);
+    const enrollment = await enrollMfa(targetUserId || requestingTeacherId, req.body.method);
     res.status(201).json(enrollment);
   } catch (error) {
     next(error);
@@ -219,13 +241,13 @@ router.post('/mfa/verify', authenticateTeacher, async (req: AuthenticatedRequest
 
     // Verify that the requesting teacher is either verifying their own MFA
     // or has explicit permission to verify other users' MFA
-    if (targetUserId !== requestingTeacherId) {
+    if (targetUserId && targetUserId !== requestingTeacherId) {
       // TODO: Check if teacher has admin permission on auth-management resource
       // For now, prevent any teacher from verifying other users' MFA
       throw new ForbiddenError('You can only verify your own MFA enrollment');
     }
 
-    const enrollment = await verifyMfa(targetUserId, req.body.method);
+    const enrollment = await verifyMfa(targetUserId || requestingTeacherId, req.body.method);
     res.json(enrollment);
   } catch (error) {
     next(error);
