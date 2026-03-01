@@ -40,10 +40,10 @@ export function StudentProfilePage() {
   const riskColor = profile.riskTier === 'URGENT' ? 'red' : profile.riskTier === 'NEEDS_SUPPORT' ? 'amber' : 'green';
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 animate-fade-in">
       {/* Header */}
       <div className="card p-4">
-        <div className="flex items-start justify-between">
+        <div className="flex items-start justify-between flex-wrap gap-3">
           <div className="flex items-center gap-4">
             <div className="h-16 w-16 rounded-full bg-atlas-accent/20 flex items-center justify-center text-lg font-bold text-atlas-primary">
               {profile.firstName[0]}{profile.lastName[0]}
@@ -54,12 +54,12 @@ export function StudentProfilePage() {
               </h1>
               <p className="text-sm text-gray-500">Grade {profile.gradeLevel}</p>
               <div className="flex gap-2 mt-1">
-                <span className={`badge badge-${riskColor}`}>
+                <span className={`badge badge-${riskColor} tooltip`} data-tooltip={profile.riskTier === 'ON_TRACK' ? 'Student is meeting academic expectations' : profile.riskTier === 'NEEDS_SUPPORT' ? 'Student may need additional support or intervention' : 'Immediate intervention recommended'}>
                   {profile.riskTier === 'ON_TRACK' ? 'On Track' : profile.riskTier === 'NEEDS_SUPPORT' ? 'Needs Support' : 'Urgent'}
                 </span>
-                {profile.ellStatus && <span className="badge badge-blue">ELL</span>}
-                {profile.iepActive && <span className="badge badge-purple">IEP</span>}
-                {profile.has504 && <span className="badge badge-purple">504</span>}
+                {profile.ellStatus && <span className="badge badge-blue tooltip" data-tooltip="English Language Learner — may need language support accommodations">ELL</span>}
+                {profile.iepActive && <span className="badge badge-purple tooltip" data-tooltip="Individualized Education Program — has documented accommodations">IEP</span>}
+                {profile.has504 && <span className="badge badge-purple tooltip" data-tooltip="504 Plan — has documented accommodations for a disability">504</span>}
               </div>
             </div>
           </div>

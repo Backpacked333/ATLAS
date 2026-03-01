@@ -1,7 +1,7 @@
 import { Router, Response, NextFunction } from 'express';
 import { AuthenticatedRequest, RosterFilters } from '../types';
 import { authenticateTeacher } from '../middleware/auth';
-import { getRoster } from '../services/roster.service';
+import { getRoster, searchRoster } from '../services/roster.service';
 
 const router = Router();
 
@@ -10,6 +10,7 @@ const router = Router();
  * Get the teacher's full student roster with optional filters.
  *
  * Query params:
+ *   search - search students by name (for global search)
  *   sectionId - filter to specific section
  *   gradeStatus - all | passing | failing | declining
  *   attendance - all | chronic | at-risk
@@ -18,6 +19,14 @@ const router = Router();
  */
 router.get('/', authenticateTeacher, async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   try {
+    // Quick search mode: return minimal student data for search bar
+    const search = req.query.search as string | undefined;
+    if (search && search.trim().length > 0) {
+      const results = await searchRoster(req.teacher!.id, search.trim());
+      res.json(results);
+      return;
+    }
+
     const filters: RosterFilters = {
       sectionId: req.query.sectionId as string | undefined,
       gradeStatus: (req.query.gradeStatus as RosterFilters['gradeStatus']) || 'all',

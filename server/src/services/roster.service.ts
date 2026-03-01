@@ -200,3 +200,37 @@ export async function getRoster(
 
   return filtered.sort((a, b) => a.lastName.localeCompare(b.lastName));
 }
+
+/**
+ * Quick search for the global search bar — returns minimal student data.
+ */
+export async function searchRoster(
+  teacherId: string,
+  query: string
+): Promise<{ id: string; firstName: string; lastName: string }[]> {
+  const teacherSections = await prisma.teacherSection.findMany({
+    where: { teacherId },
+    select: { sectionId: true },
+  });
+  const sectionIds = teacherSections.map((ts) => ts.sectionId);
+
+  const enrollments = await prisma.enrollment.findMany({
+    where: {
+      sectionId: { in: sectionIds },
+      status: 'ACTIVE',
+      student: {
+        OR: [
+          { firstName: { contains: query, mode: 'insensitive' } },
+          { lastName: { contains: query, mode: 'insensitive' } },
+        ],
+      },
+    },
+    include: {
+      student: { select: { id: true, firstName: true, lastName: true } },
+    },
+    distinct: ['studentId'],
+    take: 10,
+  });
+
+  return enrollments.map((e) => e.student);
+}
