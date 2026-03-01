@@ -16,7 +16,10 @@ model District {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  schools School[]
+  schools         School[]
+  districtAdmins  DistrictAdmin[]
+  budgetLineItems BudgetLineItem[]
+  vendorContracts VendorContract[]
 }
 
 model School {
@@ -27,12 +30,14 @@ model School {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
-  district      District       @relation(fields: [districtId], references: [id])
-  teachers      Teacher[]
-  students      Student[]
-  sections      Section[]
-  counselors    Counselor[]
-  notifications Notification[]
+  district           District               @relation(fields: [districtId], references: [id])
+  teachers           Teacher[]
+  students           Student[]
+  sections           Section[]
+  counselors         Counselor[]
+  notifications      Notification[]
+  disciplineRecords  DisciplineRecord[]
+  metricsSnapshots   SchoolMetricsSnapshot[]
 
   @@index([districtId])
 }
@@ -146,6 +151,9 @@ model Student {
   grades             Grade[]
   guardians          Guardian[]
   notifications      Notification[]
+  disciplineRecords  DisciplineRecord[]
+  riskScoreSnapshots RiskScoreSnapshot[]
+  demographic        StudentDemographic?
 
   @@index([schoolId])
   @@index([studentIdNo])
@@ -530,14 +538,17 @@ enum NotificationChannel {
 
 model AIConversation {
   id        String   @id @default(cuid())
-  teacherId String
+  teacherId String?
+  districtAdminId String?
   studentId String?  // Optional: if conversation is about a specific student
   createdAt DateTime @default(now())
 
-  teacher  Teacher        @relation(fields: [teacherId], references: [id])
-  messages AIMessage[]
+  teacher       Teacher?       @relation(fields: [teacherId], references: [id])
+  districtAdmin DistrictAdmin? @relation(fields: [districtAdminId], references: [id])
+  messages      AIMessage[]
 
   @@index([teacherId])
+  @@index([districtAdminId])
 }
 
 model AIMessage {
@@ -550,4 +561,184 @@ model AIMessage {
   conversation AIConversation @relation(fields: [conversationId], references: [id])
 
   @@index([conversationId])
+}
+
+// ─── AtlasED Command: District Administration ─────────────────────────
+
+model DistrictAdmin {
+  id            String            @id @default(cuid())
+  districtId    String
+  email         String            @unique
+  firstName     String
+  lastName      String
+  role          DistrictAdminRole
+  ssoProviderId String?           @unique
+  photoUrl      String?
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  district        District          @relation(fields: [districtId], references: [id])
+  aiConversations AIConversation[]
+
+  @@index([districtId])
+  @@index([email])
+}
+
+enum DistrictAdminRole {
+  SUPERINTENDENT
+  DIRECTOR_STUDENT_SERVICES
+  CTO
+  SELPA_DIRECTOR
+}
+
+// ─── AtlasED Command: Discipline Records ──────────────────────────────
+
+model DisciplineRecord {
+  id              String           @id @default(cuid())
+  studentId       String
+  schoolId        String
+  incidentDate    DateTime         @db.Date
+  referringStaff  String           // Name of dean/teacher who referred
+  infractionType  String           // e.g. "Defiance", "Fighting", "Disruption"
+  description     String
+  consequenceType ConsequenceType
+  daysAssigned    Int?             // For ISS/OSS: number of days
+  restorativeOffered Boolean       @default(false)
+  restorativeCompleted Boolean     @default(false)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  student Student @relation(fields: [studentId], references: [id])
+  school  School  @relation(fields: [schoolId], references: [id])
+
+  @@index([studentId])
+  @@index([schoolId])
+  @@index([incidentDate])
+  @@index([consequenceType])
+}
+
+enum ConsequenceType {
+  WARNING
+  DETENTION
+  ISS       // In-School Suspension
+  OSS       // Out-of-School Suspension
+  EXPULSION
+  RESTORATIVE
+  OTHER
+}
+
+// ─── AtlasED Command: Risk Score Snapshots ────────────────────────────
+
+model RiskScoreSnapshot {
+  id        String   @id @default(cuid())
+  studentId String
+  date      DateTime @db.Date
+  score     Float    // 0.0 to 1.0
+  factors   Json     // e.g. { attendance: 0.3, grades: 0.4, behavior: 0.2, engagement: 0.1 }
+  createdAt DateTime @default(now())
+
+  student Student @relation(fields: [studentId], references: [id])
+
+  @@unique([studentId, date])
+  @@index([studentId, date])
+  @@index([date])
+  @@index([score])
+}
+
+// ─── AtlasED Command: School Metrics Snapshots ────────────────────────
+
+model SchoolMetricsSnapshot {
+  id                     String   @id @default(cuid())
+  schoolId               String
+  date                   DateTime @db.Date
+  enrollmentCount        Int
+  attendanceRate         Float    // 0-100
+  chronicAbsenceRate     Float    // 0-100
+  atRiskCount            Int
+  atRiskPercent          Float    // 0-100
+  mtssTier2Count         Int
+  mtssTier3Count         Int
+  interventionFidelity   Float    // 0-100
+  interventionSuccessRate Float   // 0-100
+  sstBacklog             Int
+  suspensionRate         Float    // 0-100
+  suspensionCountIss     Int
+  suspensionCountOss     Int
+  iepComplianceRate      Float    // 0-100
+  courseFailureRate       Float   // 0-100
+  onTrackGraduation      Float?  // 0-100, HS only
+  teacherEngagementRate  Float    // 0-100
+  counselorWorkload      Float    // at-risk per counselor
+  disproportionalityIndex Float   // highest risk ratio
+  createdAt              DateTime @default(now())
+
+  school School @relation(fields: [schoolId], references: [id])
+
+  @@unique([schoolId, date])
+  @@index([schoolId, date])
+  @@index([date])
+}
+
+// ─── AtlasED Command: Budget & Programs ───────────────────────────────
+
+model BudgetLineItem {
+  id              String   @id @default(cuid())
+  districtId      String
+  programName     String   // e.g. "CICO Program", "Peer Tutoring"
+  category        String   // e.g. "Intervention", "Staffing", "Technology"
+  annualBudget    Float
+  amountSpent     Float    @default(0)
+  fundingSource   String   // e.g. "General Fund", "Title I", "IDEA Part B"
+  fiscalYear      String   // e.g. "2025-26"
+  studentsServed  Int      @default(0)
+  successRate     Float?   // 0-100
+  costPerStudent  Float?
+  costPerSuccess  Float?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  district District @relation(fields: [districtId], references: [id])
+
+  @@index([districtId])
+  @@index([fiscalYear])
+}
+
+// ─── AtlasED Command: Vendor Contracts ────────────────────────────────
+
+model VendorContract {
+  id            String   @id @default(cuid())
+  districtId    String
+  vendorName    String
+  productName   String
+  annualCost    Float
+  startDate     DateTime
+  endDate       DateTime
+  category      String   // e.g. "Assessment", "LMS", "Behavior", "SPED"
+  activeUsers   Int      @default(0)
+  usageRate     Float?   // 0-100
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  district District @relation(fields: [districtId], references: [id])
+
+  @@index([districtId])
+}
+
+// ─── AtlasED Command: Student Demographics (for equity analysis) ──────
+
+model StudentDemographic {
+  id          String  @id @default(cuid())
+  studentId   String  @unique
+  race        String  // e.g. "White", "Black", "Hispanic", "Asian", "Multi-Racial"
+  ethnicity   String? // e.g. "Hispanic/Latino", "Non-Hispanic"
+  gender      String  // e.g. "Male", "Female", "Non-Binary"
+  frlStatus   Boolean @default(false) // Free/Reduced Lunch
+  homeless    Boolean @default(false)
+  fosterCare  Boolean @default(false)
+  migrant     Boolean @default(false)
+
+  student Student @relation(fields: [studentId], references: [id])
+
+  @@index([race, gender])
+  @@index([frlStatus])
 }

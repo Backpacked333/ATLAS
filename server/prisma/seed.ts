@@ -376,9 +376,190 @@ async function main() {
     },
   });
 
+  // ═══════════════════════════════════════════════════════════════════
+  // AtlasED Command — District-Level Seed Data
+  // ═══════════════════════════════════════════════════════════════════
+
+  // ─── District Admins ────────────────────────────────────────────
+  await prisma.districtAdmin.create({
+    data: {
+      districtId: district.id,
+      email: 'superintendent@demo.edu',
+      firstName: 'Dr. Karen',
+      lastName: 'Mitchell',
+      role: 'SUPERINTENDENT',
+    },
+  });
+
+  await prisma.districtAdmin.create({
+    data: {
+      districtId: district.id,
+      email: 'dss@demo.edu',
+      firstName: 'Robert',
+      lastName: 'Nguyen',
+      role: 'DIRECTOR_STUDENT_SERVICES',
+    },
+  });
+
+  await prisma.districtAdmin.create({
+    data: {
+      districtId: district.id,
+      email: 'cto@demo.edu',
+      firstName: 'Lisa',
+      lastName: 'Park',
+      role: 'CTO',
+    },
+  });
+
+  // ─── Student Demographics ───────────────────────────────────────
+  const races = ['White', 'Hispanic', 'Black', 'Asian', 'Multi-Racial'];
+  const genders = ['Male', 'Female'];
+  for (let i = 0; i < students.length; i++) {
+    await prisma.studentDemographic.create({
+      data: {
+        studentId: students[i].id,
+        race: races[i % races.length],
+        ethnicity: races[i % races.length] === 'Hispanic' ? 'Hispanic/Latino' : null,
+        gender: genders[i % genders.length],
+        frlStatus: i % 3 === 0,
+        homeless: false,
+        fosterCare: false,
+        migrant: false,
+      },
+    });
+  }
+
+  // ─── Discipline Records ─────────────────────────────────────────
+  const consequenceTypes = ['WARNING', 'DETENTION', 'ISS', 'OSS', 'RESTORATIVE'] as const;
+  for (let i = 0; i < 6; i++) {
+    const incidentDate = new Date(today);
+    incidentDate.setDate(incidentDate.getDate() - i * 12);
+    await prisma.disciplineRecord.create({
+      data: {
+        studentId: students[i % students.length].id,
+        schoolId: school.id,
+        incidentDate,
+        referringStaff: 'Staff Member',
+        infractionType: i % 2 === 0 ? 'Disruption' : 'Defiance',
+        description: `Discipline incident ${i + 1}`,
+        consequenceType: consequenceTypes[i % consequenceTypes.length],
+        daysAssigned: i % 3 === 0 ? 1 : 0,
+        restorativeOffered: i % 2 === 0,
+        restorativeCompleted: i % 4 === 0,
+      },
+    });
+  }
+
+  // ─── Risk Score Snapshots ───────────────────────────────────────
+  for (const student of students) {
+    for (let d = 0; d < 5; d++) {
+      const snapshotDate = new Date(today);
+      snapshotDate.setDate(snapshotDate.getDate() - d * 7);
+      await prisma.riskScoreSnapshot.create({
+        data: {
+          studentId: student.id,
+          date: snapshotDate,
+          score: Math.round(Math.random() * 100) / 100,
+          factors: { attendance: Math.random() * 0.5, grades: Math.random() * 0.3, behavior: Math.random() * 0.2 },
+        },
+      });
+    }
+  }
+
+  // ─── School Metrics Snapshots ───────────────────────────────────
+  for (let d = 0; d < 4; d++) {
+    const snapshotDate = new Date(today);
+    snapshotDate.setDate(snapshotDate.getDate() - d * 7);
+    await prisma.schoolMetricsSnapshot.create({
+      data: {
+        schoolId: school.id,
+        date: snapshotDate,
+        enrollmentCount: students.length,
+        attendanceRate: 92.5 + Math.random() * 4,
+        chronicAbsenceRate: 8.2 + Math.random() * 3,
+        atRiskCount: 4,
+        atRiskPercent: 33.3,
+        mtssTier2Count: 2,
+        mtssTier3Count: 0,
+        interventionFidelity: 75 + Math.random() * 15,
+        interventionSuccessRate: 60 + Math.random() * 20,
+        sstBacklog: Math.floor(Math.random() * 5),
+        suspensionRate: 2.5 + Math.random() * 2,
+        suspensionCountIss: 2,
+        suspensionCountOss: 1,
+        iepComplianceRate: 95 + Math.random() * 5,
+        courseFailureRate: 5 + Math.random() * 8,
+        onTrackGraduation: 88 + Math.random() * 8,
+        teacherEngagementRate: 80 + Math.random() * 15,
+        counselorWorkload: 30 + Math.random() * 20,
+        disproportionalityIndex: 1.0 + Math.random() * 1.5,
+      },
+    });
+  }
+
+  // ─── Budget Line Items ──────────────────────────────────────────
+  const programs = [
+    { name: 'Reading Recovery', budget: 45000, students: 30, success: 72, category: 'Intervention' },
+    { name: 'Math Tutoring Lab', budget: 32000, students: 45, success: 65, category: 'Intervention' },
+    { name: 'Check & Connect', budget: 28000, students: 20, success: 78, category: 'Intervention' },
+    { name: 'Social Skills Groups', budget: 18000, students: 15, success: 60, category: 'Intervention' },
+    { name: 'After-School Enrichment', budget: 55000, students: 80, success: 55, category: 'Intervention' },
+  ];
+
+  for (const prog of programs) {
+    const costPerStudent = prog.students > 0 ? Math.round(prog.budget / prog.students) : 0;
+    const successfulStudents = Math.round(prog.students * (prog.success / 100));
+    const costPerSuccess = successfulStudents > 0 ? Math.round(prog.budget / successfulStudents) : 0;
+    await prisma.budgetLineItem.create({
+      data: {
+        districtId: district.id,
+        programName: prog.name,
+        category: prog.category,
+        annualBudget: prog.budget,
+        amountSpent: Math.round(prog.budget * 0.7),
+        fundingSource: 'Title I',
+        fiscalYear: '2025-26',
+        studentsServed: prog.students,
+        successRate: prog.success,
+        costPerStudent,
+        costPerSuccess,
+      },
+    });
+  }
+
+  // ─── Vendor Contracts ───────────────────────────────────────────
+  await prisma.vendorContract.create({
+    data: {
+      districtId: district.id,
+      vendorName: 'ReadWorks Inc.',
+      productName: 'ReadWorks Digital',
+      annualCost: 12000,
+      startDate: new Date('2025-07-01'),
+      endDate: new Date('2026-06-30'),
+      category: 'Curriculum',
+      activeUsers: 180,
+      usageRate: 0.72,
+    },
+  });
+
+  await prisma.vendorContract.create({
+    data: {
+      districtId: district.id,
+      vendorName: 'NWEA',
+      productName: 'MAP Growth',
+      annualCost: 25000,
+      startDate: new Date('2025-07-01'),
+      endDate: new Date('2026-06-30'),
+      category: 'Assessment',
+      activeUsers: students.length,
+      usageRate: 1.0,
+    },
+  });
+
   console.log('Seed completed successfully!');
   console.log(`Created: 1 district, 1 school, 1 teacher, 3 sections, ${students.length} students`);
-  console.log('Login with: teacher@demo.edu');
+  console.log('AtlasED Command: 3 district admins, discipline records, risk scores, budget items, vendor contracts');
+  console.log('Login with: teacher@demo.edu (Classroom) | superintendent@demo.edu (Command)');
 }
 
 main()
