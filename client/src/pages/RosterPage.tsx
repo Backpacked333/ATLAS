@@ -79,7 +79,7 @@ export function RosterPage() {
   );
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 animate-fade-in">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-900">My Students</h1>
         <span className="text-sm text-gray-500">{filtered.length} students</span>
