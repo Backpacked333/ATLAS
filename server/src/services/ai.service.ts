@@ -152,7 +152,7 @@ async function buildStudentContext(teacherId: string, studentId: string): Promis
     const possible = section.assignments
       .filter((a) => a.grades.some((g) => g.pointsEarned !== null))
       .reduce((s, a) => s + a.pointsPossible, 0);
-    const pct = possible > 0 ? Math.round((earned / possible) * 10) / 10 : 0;
+    const pct = possible > 0 ? Math.round((earned / possible) * 1000) / 10 : 0;
     const missing = section.assignments.flatMap((a) => a.grades.filter((g) => g.isMissing)).length;
 
     lines.push(`${section.courseName} (${section.period}): ${pct}%, ${missing} missing`);

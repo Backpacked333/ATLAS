@@ -216,7 +216,7 @@ export function AppLayout() {
                 <span className="flex-1 text-left">Search students...</span>
               )}
               <kbd className="hidden sm:inline-flex items-center gap-0.5 rounded border border-gray-200 bg-gray-100 px-1.5 py-0.5 text-[10px] font-medium text-gray-500">
-                <span className="text-xs">\u2318</span>K
+                <span className="text-xs">{"\u2318"}</span>K
               </kbd>
             </button>
             {searchOpen && searchResults.length > 0 && (
