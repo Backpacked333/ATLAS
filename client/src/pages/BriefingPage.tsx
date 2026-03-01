@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+
 import { api } from '../services/api';
 import { MorningBriefing } from '../types';
 import { AbsentStudentsList } from '../components/briefing/AbsentStudentsList';
@@ -63,7 +63,7 @@ export function BriefingPage() {
   });
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 animate-fade-in">
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Morning Briefing</h1>
         <p className="text-sm text-gray-500">{today}</p>

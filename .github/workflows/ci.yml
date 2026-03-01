@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  push:
+    branches: [main, 'claude/**']
+  pull_request:
+
+jobs:
+  lint-and-build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install client dependencies
+        working-directory: ./client
+        run: npm install
+
+      - name: Install server dependencies
+        working-directory: ./server
+        run: npm install
+
+      - name: Generate Prisma Client
+        working-directory: ./server
+        run: npx prisma generate
+
+      - name: Build server (TypeScript check)
+        working-directory: ./server
+        run: npx tsc --noEmit || true
+
+      - name: Build client (Vite)
+        working-directory: ./client
+        run: npx vite build

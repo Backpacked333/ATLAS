@@ -11,9 +11,15 @@
     "lint": "eslint src/"
   },
   "dependencies": {
+    "@tanstack/react-table": "^8.21.3",
+    "clsx": "^2.1.1",
+    "date-fns": "^4.1.0",
+    "framer-motion": "^12.34.3",
+    "lucide-react": "^0.575.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "react-router-dom": "^7.1.0"
+    "react-router-dom": "^7.1.0",
+    "recharts": "^3.7.0"
   },
   "devDependencies": {
     "@types/react": "^19.0.0",

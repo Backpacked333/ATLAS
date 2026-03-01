@@ -41,8 +41,8 @@ export function RosterPage() {
     }
 
     result.sort((a, b) => {
-      const aVal = (a as Record<string, unknown>)[sortField];
-      const bVal = (b as Record<string, unknown>)[sortField];
+      const aVal = (a as unknown as Record<string, unknown>)[sortField];
+      const bVal = (b as unknown as Record<string, unknown>)[sortField];
       if (typeof aVal === 'string' && typeof bVal === 'string') {
         return sortAsc ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
       }
@@ -79,7 +79,7 @@ export function RosterPage() {
   );
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 animate-fade-in">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-900">My Students</h1>
         <span className="text-sm text-gray-500">{filtered.length} students</span>
