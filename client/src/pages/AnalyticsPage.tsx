@@ -58,7 +58,7 @@ export function AnalyticsPage() {
         ],
       });
     }).finally(() => setLoading(false));
-  }, [isDark]);
+  }, []);
 
   const chartStyle = {
     backgroundColor: isDark ? '#1e2235' : '#fff',

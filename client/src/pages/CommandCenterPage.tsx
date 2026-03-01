@@ -79,14 +79,14 @@ export function CommandCenterPage() {
 
   useEffect(() => {
     Promise.all([
-      api.get<MorningBriefing>('/briefing'),
-      api.get<DashboardMetrics>('/dashboard/metrics'),
-      api.get<{ id: string; firstName: string; lastName: string; riskTier: string }[]>('/roster'),
+      api.get<MorningBriefing>('/briefing').catch(() => null),
+      api.get<DashboardMetrics>('/dashboard/metrics').catch(() => null),
+      api.get<{ id: string; firstName: string; lastName: string; riskTier: string }[]>('/roster').catch(() => []),
     ]).then(([b, m, s]) => {
-      setBriefing(b);
-      setMetrics(m);
-      setStudents(s);
-    }).catch(() => {}).finally(() => setLoading(false));
+      if (b) setBriefing(b);
+      if (m) setMetrics(m);
+      setStudents(s as { id: string; firstName: string; lastName: string; riskTier: string }[]);
+    }).finally(() => setLoading(false));
   }, []);
 
   if (loading) {

@@ -10,7 +10,7 @@ export function LoginPage() {
   const [loading, setLoading] = useState(false);
 
   if (isAuthenticated) {
-    navigate('/briefing', { replace: true });
+    navigate('/dashboard', { replace: true });
     return null;
   }
 
@@ -21,7 +21,7 @@ export function LoginPage() {
 
     try {
       await login(email);
-      navigate('/briefing');
+      navigate('/dashboard');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Login failed');
     } finally {
@@ -34,7 +34,7 @@ export function LoginPage() {
     setLoading(true);
     try {
       await login('teacher@demo.edu');
-      navigate('/briefing');
+      navigate('/dashboard');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Demo login failed');
     } finally {

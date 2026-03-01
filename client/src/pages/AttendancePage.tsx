@@ -35,7 +35,7 @@ export function AttendancePage() {
   useEffect(() => {
     api.get<AttendanceStudent[]>('/dashboard/attendance').then(setStudents).catch(() => {
       // Mock data if endpoint doesn't exist yet
-      api.get<{ id: string; firstName: string; lastName: string; riskTier: string; attendanceRate: number }[]>('/roster')
+      return api.get<{ id: string; firstName: string; lastName: string; riskTier: string; attendanceRate: number }[]>('/roster')
         .then(roster => {
           setStudents(roster.map(s => ({
             id: s.id,
