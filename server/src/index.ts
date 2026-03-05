@@ -16,6 +16,14 @@ import interventionRoutes from './routes/intervention.routes';
 import notificationRoutes from './routes/notification.routes';
 import aiRoutes from './routes/ai.routes';
 
+// AtlasED Command (District-level) routes
+import commandAuthRoutes from './routes/command-auth.routes';
+import scoreboardRoutes from './routes/scoreboard.routes';
+import equityRoutes from './routes/equity.routes';
+import resourceAllocationRoutes from './routes/resource-allocation.routes';
+import reportingRoutes from './routes/reporting.routes';
+import districtAiRoutes from './routes/district-ai.routes';
+
 const app = express();
 const PORT = process.env.PORT || 4000;
 
@@ -50,6 +58,14 @@ app.use('/api/referrals', referralRoutes);
 app.use('/api/interventions', interventionRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/ai', aiRoutes);
+
+// AtlasED Command (District-level) API routes
+app.use('/api/command/auth', commandAuthRoutes);
+app.use('/api/command/scoreboard', scoreboardRoutes);
+app.use('/api/command/equity', equityRoutes);
+app.use('/api/command/resources', resourceAllocationRoutes);
+app.use('/api/command/reports', reportingRoutes);
+app.use('/api/command/ai', districtAiRoutes);
 
 // Health check
 app.get('/api/health', (_req, res) => {
