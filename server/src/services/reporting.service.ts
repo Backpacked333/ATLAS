@@ -289,6 +289,18 @@ async function generateSchoolPerformance(districtId: string, schoolId?: string):
     },
   });
 
+  // Verify the school belongs to the specified district
+  if (school.districtId !== districtId) {
+    return {
+      id: generateReportId(),
+      type: 'SCHOOL_PERFORMANCE',
+      title: 'School Performance Report',
+      generatedAt: new Date().toISOString(),
+      sections: [{ title: 'Error', content: 'School not found in the specified district.' }],
+      summary: 'School not found in district.',
+    };
+  }
+
   const enrollment = school.students.length;
   const atRisk = school.students.filter((s) => s.riskTier !== 'ON_TRACK').length;
 
