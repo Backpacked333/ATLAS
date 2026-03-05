@@ -60,7 +60,7 @@ router.put('/:observationId', authenticateTeacher, async (req: AuthenticatedRequ
     if (!content) throw new ValidationError('content is required');
 
     const observation = await updateObservation(
-      req.params.observationId,
+      String(req.params.observationId),
       req.teacher!.id,
       content
     );
@@ -81,7 +81,7 @@ router.get(
   verifyStudentAccess,
   async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     try {
-      const observations = await getStudentObservations(req.teacher!.id, req.params.studentId);
+      const observations = await getStudentObservations(req.teacher!.id, String(req.params.studentId));
       res.json(observations);
     } catch (error) {
       next(error);

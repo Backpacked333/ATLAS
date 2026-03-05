@@ -39,6 +39,7 @@ export function ReferralPage() {
   const [prePopData, setPrePopData] = useState<PrePopulatedData | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState('');
 
   const [primaryConcern, setPrimaryConcern] = useState<ConcernType>('ACADEMIC');
@@ -81,7 +82,8 @@ export function ReferralPage() {
       };
 
       await api.post('/referrals', input);
-      navigate(`/students/${studentId}`);
+      setSubmitted(true);
+      setTimeout(() => navigate(`/students/${studentId}`), 1500);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to submit referral');
     } finally {
@@ -102,6 +104,28 @@ export function ReferralPage() {
   }
 
   if (!prePopData) return <p className="text-gray-500">Student data not available.</p>;
+
+  if (submitted) {
+    return (
+      <div className="max-w-2xl mx-auto">
+        <div className="card p-8 text-center">
+          <div className="mx-auto h-16 w-16 rounded-full bg-green-100 flex items-center justify-center mb-4">
+            <svg className="h-8 w-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+            </svg>
+          </div>
+          <h2 className="text-xl font-bold text-gray-900 mb-2">Referral Submitted</h2>
+          <p className="text-sm text-gray-600 mb-1">
+            SST referral for <strong>{prePopData.student.firstName} {prePopData.student.lastName}</strong> has been submitted successfully.
+          </p>
+          <p className="text-sm text-gray-500">
+            {urgency === 'URGENT' ? 'The counseling team will review within 24 hours.' : 'The counseling team will review within 5 school days.'}
+          </p>
+          <p className="text-xs text-gray-400 mt-4">Redirecting to student profile...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-2xl mx-auto space-y-4">

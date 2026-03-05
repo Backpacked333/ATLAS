@@ -52,7 +52,7 @@ router.get(
   verifySectionAccess,
   async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     try {
-      const summary = await getSectionSummary(req.teacher!.id, req.params.sectionId);
+      const summary = await getSectionSummary(req.teacher!.id, String(req.params.sectionId));
       res.json(summary);
     } catch (error) {
       next(error);
@@ -71,7 +71,7 @@ router.get(
   async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     try {
       const seats = await prisma.seatAssignment.findMany({
-        where: { sectionId: req.params.sectionId },
+        where: { sectionId: String(req.params.sectionId) },
         orderBy: [{ row: 'asc' }, { col: 'asc' }],
       });
 

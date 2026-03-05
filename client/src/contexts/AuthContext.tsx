@@ -1,13 +1,17 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { api } from '../services/api';
 import { Teacher } from '../types';
+import { DEMO_TEACHER } from '../demo/mockData';
+import { demoApiHandler, resetDemoState } from '../demo/demoApiHandler';
 
 interface AuthContextType {
   teacher: Teacher | null;
   token: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  isDemoMode: boolean;
   login: (email: string) => Promise<void>;
+  loginDemo: () => void;
   logout: () => void;
 }
 
@@ -17,10 +21,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [teacher, setTeacher] = useState<Teacher | null>(null);
   const [token, setToken] = useState<string | null>(() => localStorage.getItem('atlas_token'));
   const [isLoading, setIsLoading] = useState(true);
+  const [isDemoMode, setIsDemoMode] = useState(() => localStorage.getItem('atlas_demo') === 'true');
 
   useEffect(() => {
-    if (token) {
-      api.setToken(token);
+    // If demo mode was previously active, restore it
+    if (isDemoMode) {
+      api.setDemoMode(true, demoApiHandler);
+      setTeacher(DEMO_TEACHER);
+      setToken('demo-jwt-token');
+      setIsLoading(false);
+      return;
+    }
+
+    const currentToken = localStorage.getItem('atlas_token');
+    if (currentToken) {
+      api.setToken(currentToken);
       api.get<{ id: string; email: string; firstName: string; lastName: string; photoUrl: string; school: { name: string }; sections: { id: string; courseName: string; period: string }[] }>('/auth/me')
         .then((data) => {
           setTeacher({
@@ -43,7 +58,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } else {
       setIsLoading(false);
     }
-  }, [token]);
+  }, [isDemoMode]);
 
   const login = useCallback(async (email: string) => {
     const result = await api.post<{ token: string; teacher: Teacher }>('/auth/login', { email });
@@ -53,11 +68,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     api.setToken(result.token);
   }, []);
 
+  const loginDemo = useCallback(() => {
+    resetDemoState();
+    api.setDemoMode(true, demoApiHandler);
+    setIsDemoMode(true);
+    setTeacher(DEMO_TEACHER);
+    setToken('demo-jwt-token');
+    localStorage.setItem('atlas_demo', 'true');
+    localStorage.setItem('atlas_token', 'demo-jwt-token');
+  }, []);
+
   const logout = useCallback(() => {
     setToken(null);
     setTeacher(null);
+    setIsDemoMode(false);
     localStorage.removeItem('atlas_token');
+    localStorage.removeItem('atlas_demo');
     api.setToken(null);
+    api.setDemoMode(false);
+    resetDemoState();
   }, []);
 
   return (
@@ -67,7 +96,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         token,
         isAuthenticated: !!teacher,
         isLoading,
+        isDemoMode,
         login,
+        loginDemo,
         logout,
       }}
     >

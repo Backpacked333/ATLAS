@@ -41,8 +41,8 @@ export function RosterPage() {
     }
 
     result.sort((a, b) => {
-      const aVal = (a as Record<string, unknown>)[sortField];
-      const bVal = (b as Record<string, unknown>)[sortField];
+      const aVal = (a as unknown as Record<string, unknown>)[sortField];
+      const bVal = (b as unknown as Record<string, unknown>)[sortField];
       if (typeof aVal === 'string' && typeof bVal === 'string') {
         return sortAsc ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
       }

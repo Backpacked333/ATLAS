@@ -1,13 +1,29 @@
 const API_BASE = '/api';
 
+type DemoHandler = (url: string, body?: unknown) => Promise<unknown>;
+
 class ApiClient {
   private token: string | null = null;
+  private demoMode = false;
+  private demoHandler: DemoHandler | null = null;
 
   setToken(token: string | null) {
     this.token = token;
   }
 
+  setDemoMode(enabled: boolean, handler?: DemoHandler) {
+    this.demoMode = enabled;
+    this.demoHandler = handler || null;
+  }
+
   private async request<T>(url: string, options: RequestInit = {}): Promise<T> {
+    // In demo mode, route through the demo handler
+    if (this.demoMode && this.demoHandler) {
+      const body = options.body ? JSON.parse(options.body as string) : undefined;
+      const result = await this.demoHandler(url, body);
+      return result as T;
+    }
+
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
       ...(options.headers as Record<string, string> || {}),

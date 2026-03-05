@@ -38,14 +38,14 @@ export async function verifyStudentAccess(
   next: NextFunction
 ): Promise<void> {
   try {
-    const { studentId } = req.params;
+    const studentId = String(req.params.studentId);
     const teacher = req.teacher;
 
     if (!teacher) {
       throw new ForbiddenError('Teacher context not available');
     }
 
-    if (!studentId) {
+    if (!studentId || studentId === 'undefined') {
       next();
       return;
     }
@@ -73,14 +73,14 @@ export async function verifySectionAccess(
   next: NextFunction
 ): Promise<void> {
   try {
-    const { sectionId } = req.params;
+    const sectionId = String(req.params.sectionId);
     const teacher = req.teacher;
 
     if (!teacher) {
       throw new ForbiddenError('Teacher context not available');
     }
 
-    if (!sectionId) {
+    if (!sectionId || sectionId === 'undefined') {
       next();
       return;
     }

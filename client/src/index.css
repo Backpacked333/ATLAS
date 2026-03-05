@@ -6,14 +6,18 @@
   * {
     box-sizing: border-box;
   }
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
   body {
-    @apply text-gray-900;
+    @apply text-gray-900 bg-atlas-background;
   }
 }
 
 @layer components {
   .card {
-    @apply bg-white rounded-lg border border-atlas-border shadow-sm;
+    @apply bg-white rounded-lg border border-atlas-border shadow-sm transition-shadow hover:shadow-md;
   }
   .card-header {
     @apply px-4 py-3 border-b border-atlas-border;
