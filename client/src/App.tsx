@@ -8,6 +8,7 @@ import { SectionPage } from './pages/SectionPage';
 import { StudentProfilePage } from './pages/StudentProfilePage';
 import { ReferralPage } from './pages/ReferralPage';
 import { NotificationsPage } from './pages/NotificationsPage';
+import { InsightsPage } from './pages/InsightsPage';
 
 export default function App() {
   return (
@@ -18,6 +19,7 @@ export default function App() {
           <Route path="/" element={<Navigate to="/briefing" replace />} />
           <Route path="/briefing" element={<BriefingPage />} />
           <Route path="/roster" element={<RosterPage />} />
+          <Route path="/insights" element={<InsightsPage />} />
           <Route path="/sections/:sectionId" element={<SectionPage />} />
           <Route path="/students/:studentId" element={<StudentProfilePage />} />
           <Route path="/referrals/new/:studentId" element={<ReferralPage />} />

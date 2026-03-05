@@ -2,7 +2,7 @@ import { Router, Response, NextFunction } from 'express';
 import { AuthenticatedRequest } from '../types';
 import { authenticateTeacher } from '../middleware/auth';
 import { verifySectionAccess } from '../middleware/ferpa';
-import { getSectionSummary } from '../services/section.service';
+import { getSectionSummary, getEnhancedSectionSummary } from '../services/section.service';
 import { prisma } from '../utils/prisma';
 
 const router = Router();
@@ -53,6 +53,24 @@ router.get(
   async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     try {
       const summary = await getSectionSummary(req.teacher!.id, req.params.sectionId);
+      res.json(summary);
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+/**
+ * GET /api/sections/:sectionId/enhanced
+ * Get enhanced section summary with trends, rankings, and insights.
+ */
+router.get(
+  '/:sectionId/enhanced',
+  authenticateTeacher,
+  verifySectionAccess,
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    try {
+      const summary = await getEnhancedSectionSummary(req.teacher!.id, req.params.sectionId);
       res.json(summary);
     } catch (error) {
       next(error);

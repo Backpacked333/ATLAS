@@ -15,6 +15,7 @@ import referralRoutes from './routes/referral.routes';
 import interventionRoutes from './routes/intervention.routes';
 import notificationRoutes from './routes/notification.routes';
 import aiRoutes from './routes/ai.routes';
+import insightsRoutes from './routes/insights.routes';
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -50,6 +51,7 @@ app.use('/api/referrals', referralRoutes);
 app.use('/api/interventions', interventionRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/ai', aiRoutes);
+app.use('/api/insights', insightsRoutes);
 
 // Health check
 app.get('/api/health', (_req, res) => {

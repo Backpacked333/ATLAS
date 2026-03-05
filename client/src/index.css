@@ -7,69 +7,208 @@
     box-sizing: border-box;
   }
   body {
-    @apply text-gray-900;
+    @apply text-atlas-text-primary bg-atlas-bg antialiased;
   }
 }
 
 @layer components {
+  /* ─── Cards ────────────────────────────────────────────────────────── */
   .card {
-    @apply bg-white rounded-lg border border-atlas-border shadow-sm;
+    @apply bg-atlas-surface rounded-card border border-atlas-border shadow-card transition-shadow duration-200;
+  }
+  .card:hover {
+    @apply shadow-card-hover;
   }
   .card-header {
-    @apply px-4 py-3 border-b border-atlas-border;
+    @apply px-5 py-4 border-b border-atlas-border;
   }
   .card-body {
-    @apply px-4 py-3;
+    @apply px-5 py-4;
   }
+  .card-elevated {
+    @apply bg-atlas-surface rounded-card shadow-elevated;
+  }
+
+  /* ─── Metric Cards ─────────────────────────────────────────────────── */
+  .metric-card {
+    @apply card p-5 flex flex-col gap-1;
+  }
+  .metric-card-label {
+    @apply text-xs font-medium uppercase tracking-wider text-atlas-text-tertiary;
+  }
+  .metric-card-value {
+    @apply text-metric text-atlas-text-primary;
+  }
+
+  /* ─── Action Cards ─────────────────────────────────────────────────── */
+  .action-card {
+    @apply card p-4 border-l-4 flex items-start gap-4;
+  }
+  .action-card-critical {
+    @apply action-card border-l-atlas-rose-500;
+  }
+  .action-card-warning {
+    @apply action-card border-l-atlas-amber-500;
+  }
+  .action-card-info {
+    @apply action-card border-l-atlas-sky-500;
+  }
+  .action-card-success {
+    @apply action-card border-l-atlas-emerald-500;
+  }
+
+  /* ─── Insight Banner ───────────────────────────────────────────────── */
+  .insight-banner {
+    @apply rounded-card p-4 flex items-start gap-3;
+  }
+  .insight-banner-info {
+    @apply insight-banner bg-atlas-sky-50 text-atlas-sky-800 border border-atlas-sky-200;
+  }
+  .insight-banner-warning {
+    @apply insight-banner bg-atlas-amber-50 text-atlas-amber-800 border border-atlas-amber-200;
+  }
+  .insight-banner-critical {
+    @apply insight-banner bg-atlas-rose-50 text-atlas-rose-800 border border-atlas-rose-200;
+  }
+  .insight-banner-success {
+    @apply insight-banner bg-atlas-emerald-50 text-atlas-emerald-800 border border-atlas-emerald-200;
+  }
+
+  /* ─── Badges ───────────────────────────────────────────────────────── */
   .badge {
-    @apply inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium;
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-badge text-xs font-semibold;
   }
-  .badge-green {
-    @apply bg-green-100 text-green-800;
+  .badge-emerald {
+    @apply bg-atlas-emerald-100 text-atlas-emerald-800;
   }
   .badge-amber {
-    @apply bg-amber-100 text-amber-800;
+    @apply bg-atlas-amber-100 text-atlas-amber-800;
   }
-  .badge-red {
-    @apply bg-red-100 text-red-800;
+  .badge-rose {
+    @apply bg-atlas-rose-100 text-atlas-rose-800;
   }
-  .badge-blue {
-    @apply bg-blue-100 text-blue-800;
+  .badge-sky {
+    @apply bg-atlas-sky-100 text-atlas-sky-800;
   }
-  .badge-purple {
-    @apply bg-purple-100 text-purple-800;
+  .badge-violet {
+    @apply bg-atlas-violet-100 text-atlas-violet-800;
+  }
+  .badge-indigo {
+    @apply bg-atlas-indigo-100 text-atlas-indigo-800;
   }
   .badge-gray {
-    @apply bg-gray-100 text-gray-800;
+    @apply bg-gray-100 text-gray-700;
   }
+  /* Legacy badge compat */
+  .badge-green {
+    @apply badge-emerald;
+  }
+  .badge-red {
+    @apply badge-rose;
+  }
+  .badge-blue {
+    @apply badge-sky;
+  }
+  .badge-purple {
+    @apply badge-violet;
+  }
+
+  /* ─── Risk Indicators ──────────────────────────────────────────────── */
+  .risk-on-track {
+    @apply text-atlas-emerald-700;
+  }
+  .risk-needs-support {
+    @apply text-atlas-amber-700;
+  }
+  .risk-urgent {
+    @apply text-atlas-rose-700 animate-pulse-subtle;
+  }
+
+  /* ─── Buttons ──────────────────────────────────────────────────────── */
   .btn {
-    @apply inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-atlas-primary focus:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none;
+    @apply inline-flex items-center justify-center rounded-button px-4 py-2 text-sm font-medium transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-atlas-indigo-500 focus:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none;
   }
   .btn-primary {
-    @apply btn bg-atlas-primary text-white hover:bg-blue-900;
+    @apply btn bg-atlas-indigo-600 text-white hover:bg-atlas-indigo-700 active:bg-atlas-indigo-800 shadow-sm;
   }
   .btn-secondary {
-    @apply btn bg-white text-gray-700 border border-gray-300 hover:bg-gray-50;
+    @apply btn bg-white text-atlas-text-secondary border border-atlas-border hover:bg-gray-50 active:bg-gray-100;
   }
   .btn-danger {
-    @apply btn bg-atlas-danger text-white hover:bg-red-700;
+    @apply btn bg-atlas-rose-600 text-white hover:bg-atlas-rose-700 active:bg-atlas-rose-800 shadow-sm;
   }
   .btn-ghost {
-    @apply btn bg-transparent text-gray-600 hover:bg-gray-100;
+    @apply btn bg-transparent text-atlas-text-secondary hover:bg-gray-100 active:bg-gray-200;
   }
+  .btn-success {
+    @apply btn bg-atlas-emerald-600 text-white hover:bg-atlas-emerald-700 shadow-sm;
+  }
+
+  /* ─── Inputs ───────────────────────────────────────────────────────── */
   .input {
-    @apply block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-atlas-primary focus:ring-1 focus:ring-atlas-primary;
+    @apply block w-full rounded-button border border-atlas-border px-3 py-2 text-sm shadow-sm transition-colors focus:border-atlas-indigo-500 focus:ring-1 focus:ring-atlas-indigo-500 placeholder:text-atlas-text-tertiary;
   }
+
+  /* ─── Severity Bars ────────────────────────────────────────────────── */
   .severity-bar-red {
-    @apply border-l-4 border-red-500;
+    @apply border-l-4 border-atlas-rose-500;
   }
   .severity-bar-amber {
-    @apply border-l-4 border-amber-500;
+    @apply border-l-4 border-atlas-amber-500;
   }
   .severity-bar-gray {
     @apply border-l-4 border-gray-300;
   }
   .severity-bar-green {
-    @apply border-l-4 border-green-500;
+    @apply border-l-4 border-atlas-emerald-500;
+  }
+
+  /* ─── Avatars ──────────────────────────────────────────────────────── */
+  .avatar {
+    @apply rounded-full flex items-center justify-center font-semibold text-atlas-text-inverse;
+  }
+  .avatar-sm {
+    @apply avatar h-8 w-8 text-xs;
+  }
+  .avatar-md {
+    @apply avatar h-10 w-10 text-sm;
+  }
+  .avatar-lg {
+    @apply avatar h-14 w-14 text-lg;
+  }
+  .avatar-xl {
+    @apply avatar h-20 w-20 text-xl;
+  }
+
+  /* ─── Tab Navigation ───────────────────────────────────────────────── */
+  .tab-nav {
+    @apply flex gap-1 border-b border-atlas-border;
+  }
+  .tab-nav-item {
+    @apply px-4 py-2.5 text-sm font-medium border-b-2 transition-colors cursor-pointer;
+  }
+  .tab-nav-item-active {
+    @apply tab-nav-item border-atlas-indigo-600 text-atlas-indigo-700;
+  }
+  .tab-nav-item-inactive {
+    @apply tab-nav-item border-transparent text-atlas-text-tertiary hover:text-atlas-text-secondary hover:border-gray-300;
+  }
+
+  /* ─── Progress Bar ─────────────────────────────────────────────────── */
+  .progress-bar {
+    @apply w-full h-2 bg-gray-100 rounded-full overflow-hidden;
+  }
+  .progress-bar-fill {
+    @apply h-full rounded-full transition-all duration-500 ease-out;
+  }
+
+  /* ─── Skeleton Loading ─────────────────────────────────────────────── */
+  .skeleton {
+    @apply bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 bg-[length:200%_100%] animate-shimmer rounded;
+  }
+
+  /* ─── Section Divider ──────────────────────────────────────────────── */
+  .section-title {
+    @apply text-sm font-semibold uppercase tracking-wider text-atlas-text-tertiary mb-4;
   }
 }

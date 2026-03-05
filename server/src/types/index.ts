@@ -226,3 +226,153 @@ export interface AIAssistantRequest {
   studentId?: string;
   conversationId?: string;
 }
+
+// ─── Enhanced Briefing ────────────────────────────────────────────────
+
+export interface PriorityAction {
+  id: string;
+  urgency: 'critical' | 'high' | 'medium';
+  category: 'attendance' | 'academic' | 'intervention' | 'accommodation';
+  title: string;
+  subtitle: string;
+  studentId: string;
+  firstName: string;
+  lastName: string;
+  actionLabel: string;
+  actionUrl: string;
+}
+
+export interface TodayStats {
+  totalStudents: number;
+  absentCount: number;
+  absentRate: number;
+  interventionsDue: number;
+  interventionsCompleted: number;
+  urgentAlerts: number;
+}
+
+export interface Celebration {
+  studentId: string;
+  firstName: string;
+  lastName: string;
+  achievement: string;
+}
+
+export interface WeekAhead {
+  assessmentsCount: number;
+  studentsWithAccommodations: number;
+  interventionCheckIns: number;
+}
+
+export interface EnhancedMorningBriefing extends MorningBriefing {
+  priorityActions: PriorityAction[];
+  todayStats: TodayStats;
+  celebrations: Celebration[];
+  weekAhead: WeekAhead;
+}
+
+// ─── Enhanced Student Profile ─────────────────────────────────────────
+
+export interface EnhancedStudentProfile extends StudentProfileTeacherView {
+  narrativeSummary: string;
+  riskAnalysis: {
+    currentScore: number;
+    previousScore: number;
+    trajectory: 'improving' | 'stable' | 'declining';
+    factors: { factor: string; impact: 'high' | 'medium' | 'low'; detail: string }[];
+  };
+  recommendedActions: {
+    priority: number;
+    action: string;
+    reason: string;
+    actionType: 'contact' | 'observation' | 'intervention' | 'referral' | 'celebrate';
+  }[];
+  attendanceCalendar: {
+    date: string;
+    status: 'present' | 'absent' | 'tardy' | 'excused' | 'weekend';
+  }[];
+  gradeTrajectory: {
+    sectionName: string;
+    currentGrade: number;
+    projectedEndOfTerm: number;
+    confidence: 'high' | 'medium' | 'low';
+  }[];
+  classComparison: {
+    sectionName: string;
+    studentGrade: number;
+    classAverage: number;
+    percentile: number;
+  }[];
+}
+
+// ─── Enhanced Section Summary ─────────────────────────────────────────
+
+export interface EnhancedSectionSummary extends SectionSummary {
+  gradeTrend: { week: string; avg: number }[];
+  attendanceTrend: { week: string; rate: number }[];
+  riskBreakdown: { tier: string; count: number }[];
+  studentRankings: {
+    studentId: string;
+    firstName: string;
+    lastName: string;
+    gradePercent: number;
+    gradeDelta: number;
+    attendanceRate: number;
+    missingCount: number;
+    riskTier: string;
+  }[];
+  categoryPerformance: { category: string; avgScore: number; assignmentCount: number }[];
+  sectionInsights: { type: string; message: string; severity: 'info' | 'warning' | 'critical' }[];
+}
+
+// ─── Teacher Insights ─────────────────────────────────────────────────
+
+export interface StudentBrief {
+  id: string;
+  firstName: string;
+  lastName: string;
+  photoUrl: string | null;
+  riskTier: string;
+}
+
+export interface TeacherInsights {
+  riskDistribution: { tier: string; count: number; students: StudentBrief[] }[];
+  riskTrend: { week: string; onTrack: number; needsSupport: number; urgent: number }[];
+  sectionComparisons: {
+    sectionId: string;
+    sectionName: string;
+    avgGrade: number;
+    avgGradeDelta: number;
+    avgAttendance: number;
+    failingCount: number;
+    missingWorkCount: number;
+  }[];
+  priorityStudents: {
+    studentId: string;
+    firstName: string;
+    lastName: string;
+    photoUrl: string | null;
+    riskTier: string;
+    riskScore: number;
+    riskFactors: string[];
+    suggestedActions: string[];
+    lastTeacherContact: string | null;
+    daysSinceContact: number | null;
+  }[];
+  patterns: {
+    id: string;
+    type: 'attendance_cluster' | 'grade_decline_cohort' | 'missing_work_spike' | 'positive_trend';
+    title: string;
+    description: string;
+    affectedStudents: StudentBrief[];
+    severity: 'info' | 'warning' | 'critical';
+    suggestedAction: string;
+  }[];
+  weeklySnapshot: {
+    studentsImproved: number;
+    studentsDeclined: number;
+    interventionCompletionRate: number;
+    parentContactsMade: number;
+    observationsLogged: number;
+  };
+}

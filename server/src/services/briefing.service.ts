@@ -9,6 +9,11 @@ import {
   InterventionTask,
   AccommodationAlert,
   NewStudent,
+  EnhancedMorningBriefing,
+  PriorityAction,
+  TodayStats,
+  Celebration,
+  WeekAhead,
 } from '../types';
 
 export async function getMorningBriefing(teacherId: string): Promise<MorningBriefing> {
@@ -155,10 +160,10 @@ async function getGradeAlerts(teacherId: string, studentIds: string[]): Promise<
 
     for (const enrollment of enrolledStudents) {
       const student = enrollment.student;
-      const allGrades = section.assignments.flatMap((a) =>
+      const allGrades = section.assignments.flatMap((a: any) =>
         a.grades
-          .filter((g) => g.studentId === student.id && g.pointsEarned !== null)
-          .map((g) => ({
+          .filter((g: any) => g.studentId === student.id && g.pointsEarned !== null)
+          .map((g: any) => ({
             pointsEarned: g.pointsEarned!,
             pointsPossible: a.pointsPossible,
             gradedAt: g.gradedAt || g.createdAt,
@@ -168,14 +173,14 @@ async function getGradeAlerts(teacherId: string, studentIds: string[]): Promise<
 
       if (allGrades.length === 0) continue;
 
-      const totalEarned = allGrades.reduce((sum, g) => sum + g.pointsEarned, 0);
-      const totalPossible = allGrades.reduce((sum, g) => sum + g.pointsPossible, 0);
+      const totalEarned = allGrades.reduce((sum: any, g: any) => sum + g.pointsEarned, 0);
+      const totalPossible = allGrades.reduce((sum: any, g: any) => sum + g.pointsPossible, 0);
       const currentPct = totalPossible > 0 ? (totalEarned / totalPossible) * 100 : 0;
 
       // Calculate grade 2 weeks ago
-      const oldGrades = allGrades.filter((g) => g.gradedAt < twoWeeksAgo);
-      const oldEarned = oldGrades.reduce((sum, g) => sum + g.pointsEarned, 0);
-      const oldPossible = oldGrades.reduce((sum, g) => sum + g.pointsPossible, 0);
+      const oldGrades = allGrades.filter((g: any) => g.gradedAt < twoWeeksAgo);
+      const oldEarned = oldGrades.reduce((sum: any, g: any) => sum + g.pointsEarned, 0);
+      const oldPossible = oldGrades.reduce((sum: any, g: any) => sum + g.pointsPossible, 0);
       const oldPct = oldPossible > 0 ? (oldEarned / oldPossible) * 100 : currentPct;
 
       const delta = currentPct - oldPct;
@@ -183,9 +188,9 @@ async function getGradeAlerts(teacherId: string, studentIds: string[]): Promise<
       // Alert if below C (73%) or dropped more than 10 points (roughly one letter grade)
       if (currentPct < 73 || delta < -10) {
         const lowAssignments = allGrades
-          .filter((g) => g.pointsPossible > 0 && (g.pointsEarned / g.pointsPossible) * 100 < 60)
+          .filter((g: any) => g.pointsPossible > 0 && (g.pointsEarned / g.pointsPossible) * 100 < 60)
           .slice(-3)
-          .map((g) => ({
+          .map((g: any) => ({
             name: g.assignmentName,
             score: g.pointsEarned,
             possible: g.pointsPossible,
@@ -234,7 +239,7 @@ async function getMissingWork(teacherId: string, studentIds: string[]): Promise<
     orderBy: { assignment: { dueDate: 'asc' } },
   });
 
-  return missingGrades.map((g) => ({
+  return missingGrades.map((g: any) => ({
     studentId: g.student.id,
     firstName: g.student.firstName,
     lastName: g.student.lastName,
@@ -278,12 +283,12 @@ async function getInterventionTasks(teacherId: string, today: Date): Promise<Int
     },
   });
 
-  return interventions.map((intervention) => {
+  return interventions.map((intervention: any) => {
     const todayLog = intervention.logs.find(
-      (l) => l.date.toISOString().split('T')[0] === today.toISOString().split('T')[0]
+      (l: any) => l.date.toISOString().split('T')[0] === today.toISOString().split('T')[0]
     );
     const yesterdayLog = intervention.logs.find(
-      (l) => l.date.toISOString().split('T')[0] === yesterday.toISOString().split('T')[0]
+      (l: any) => l.date.toISOString().split('T')[0] === yesterday.toISOString().split('T')[0]
     );
 
     return {
@@ -360,7 +365,7 @@ async function getAccommodationAlerts(
           studentId: student.id,
           firstName: student.firstName,
           lastName: student.lastName,
-          accommodations: student.accommodations.map((a) => a.description),
+          accommodations: student.accommodations.map((a: any) => a.description),
           upcomingAssessment: assignment.name,
           assessmentDate: assignment.dueDate.toISOString().split('T')[0],
         });
@@ -402,7 +407,7 @@ async function getNewStudents(teacherId: string): Promise<NewStudent[]> {
     orderBy: { enrollDate: 'desc' },
   });
 
-  return recentEnrollments.map((e) => ({
+  return recentEnrollments.map((e: any) => ({
     studentId: e.student.id,
     firstName: e.student.firstName,
     lastName: e.student.lastName,
@@ -414,4 +419,222 @@ async function getNewStudents(teacherId: string): Promise<NewStudent[]> {
     priorGpa: e.student.cumulativeGpa,
     addedDate: e.enrollDate.toISOString().split('T')[0],
   }));
+}
+
+export async function getEnhancedBriefing(teacherId: string): Promise<EnhancedMorningBriefing> {
+  const baseBriefing = await getMorningBriefing(teacherId);
+  const studentIds = await getTeacherStudentIds(teacherId);
+
+  // ─── Today Stats ──────────────────────────────────────────────────────
+  const totalStudents = studentIds.length;
+  const absentCount = baseBriefing.absentToday.length;
+  const absentRate = totalStudents > 0 ? Math.round((absentCount / totalStudents) * 1000) / 10 : 0;
+
+  const interventionsDue = baseBriefing.interventionTasks.length;
+  const interventionsCompleted = baseBriefing.interventionTasks.filter((t) => t.completedToday).length;
+
+  // Urgent alerts: grades below 60 + absences of 3+ consecutive days
+  const urgentGradeAlerts = baseBriefing.gradeAlerts.filter((a) => a.currentGrade < 60).length;
+  const urgentAbsenceAlerts = baseBriefing.absentToday.filter((a) => a.consecutiveDays >= 3).length;
+  const urgentAlerts = urgentGradeAlerts + urgentAbsenceAlerts;
+
+  const todayStats: TodayStats = {
+    totalStudents,
+    absentCount,
+    absentRate,
+    interventionsDue,
+    interventionsCompleted,
+    urgentAlerts,
+  };
+
+  // ─── Priority Actions ─────────────────────────────────────────────────
+  const priorityActions: PriorityAction[] = [];
+  let actionIndex = 0;
+
+  // Absent students with 3+ consecutive days → critical
+  for (const absent of baseBriefing.absentToday) {
+    if (absent.consecutiveDays >= 3) {
+      priorityActions.push({
+        id: `action-${actionIndex++}`,
+        urgency: 'critical',
+        category: 'attendance',
+        title: `${absent.firstName} ${absent.lastName} — ${absent.consecutiveDays} consecutive days absent`,
+        subtitle: `Periods: ${absent.periods.join(', ')}`,
+        studentId: absent.studentId,
+        firstName: absent.firstName,
+        lastName: absent.lastName,
+        actionLabel: 'Contact Family',
+        actionUrl: `/students/${absent.studentId}`,
+      });
+    }
+  }
+
+  // Grade alerts below 60 → high
+  for (const alert of baseBriefing.gradeAlerts) {
+    if (alert.currentGrade < 60) {
+      priorityActions.push({
+        id: `action-${actionIndex++}`,
+        urgency: 'high',
+        category: 'academic',
+        title: `${alert.firstName} ${alert.lastName} failing ${alert.sectionName}`,
+        subtitle: `Current grade: ${alert.currentGrade}% (${alert.delta > 0 ? '+' : ''}${alert.delta}%)`,
+        studentId: alert.studentId,
+        firstName: alert.firstName,
+        lastName: alert.lastName,
+        actionLabel: 'View Profile',
+        actionUrl: `/students/${alert.studentId}`,
+      });
+    }
+  }
+
+  // Overdue interventions → high
+  for (const task of baseBriefing.interventionTasks) {
+    if (task.isOverdue && !task.completedToday) {
+      priorityActions.push({
+        id: `action-${actionIndex++}`,
+        urgency: 'high',
+        category: 'intervention',
+        title: `Overdue: ${task.type} for ${task.firstName} ${task.lastName}`,
+        subtitle: task.description,
+        studentId: task.studentId,
+        firstName: task.firstName,
+        lastName: task.lastName,
+        actionLabel: 'Log Check-In',
+        actionUrl: `/students/${task.studentId}`,
+      });
+    }
+  }
+
+  // Sort by urgency: critical first, then high, then medium
+  const urgencyOrder: Record<string, number> = { critical: 0, high: 1, medium: 2 };
+  priorityActions.sort((a, b) => urgencyOrder[a.urgency] - urgencyOrder[b.urgency]);
+
+  // ─── Celebrations ─────────────────────────────────────────────────────
+  const celebrations: Celebration[] = [];
+
+  const fourWeeksAgo = new Date();
+  fourWeeksAgo.setDate(fourWeeksAgo.getDate() - 28);
+  const twoWeeksAgo = new Date();
+  twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
+
+  // Look for students whose grades improved significantly
+  const sections = await prisma.teacherSection.findMany({
+    where: { teacherId },
+    include: {
+      section: {
+        include: {
+          assignments: {
+            include: {
+              grades: {
+                where: { studentId: { in: studentIds } },
+              },
+            },
+          },
+          enrollments: {
+            where: { status: 'ACTIVE' },
+            include: { student: { select: { id: true, firstName: true, lastName: true } } },
+          },
+        },
+      },
+    },
+  });
+
+  const celebrationSet = new Set<string>();
+
+  for (const ts of sections) {
+    const section = ts.section;
+    for (const enrollment of section.enrollments) {
+      if (celebrationSet.has(enrollment.studentId)) continue;
+
+      const allGrades = section.assignments.flatMap((a: any) =>
+        a.grades
+          .filter((g: any) => g.studentId === enrollment.studentId && g.pointsEarned !== null)
+          .map((g: any) => ({
+            earned: g.pointsEarned!,
+            possible: a.pointsPossible,
+            gradedAt: g.gradedAt || g.createdAt,
+          }))
+      );
+
+      if (allGrades.length < 3) continue;
+
+      // Recent grades (last 2 weeks)
+      const recentGrades = allGrades.filter((g: any) => g.gradedAt >= twoWeeksAgo);
+      const olderGrades = allGrades.filter((g: any) => g.gradedAt < twoWeeksAgo && g.gradedAt >= fourWeeksAgo);
+
+      if (recentGrades.length === 0 || olderGrades.length === 0) continue;
+
+      const recentEarned = recentGrades.reduce((s: any, g: any) => s + g.earned, 0);
+      const recentPossible = recentGrades.reduce((s: any, g: any) => s + g.possible, 0);
+      const recentPct = recentPossible > 0 ? (recentEarned / recentPossible) * 100 : 0;
+
+      const olderEarned = olderGrades.reduce((s: any, g: any) => s + g.earned, 0);
+      const olderPossible = olderGrades.reduce((s: any, g: any) => s + g.possible, 0);
+      const olderPct = olderPossible > 0 ? (olderEarned / olderPossible) * 100 : 0;
+
+      const improvement = recentPct - olderPct;
+
+      if (improvement >= 10) {
+        celebrationSet.add(enrollment.studentId);
+        celebrations.push({
+          studentId: enrollment.studentId,
+          firstName: enrollment.student.firstName,
+          lastName: enrollment.student.lastName,
+          achievement: `Grade improved by ${Math.round(improvement)}% in ${section.courseName}`,
+        });
+      }
+    }
+  }
+
+  // ─── Week Ahead ───────────────────────────────────────────────────────
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const endOfWeek = new Date(today);
+  endOfWeek.setDate(endOfWeek.getDate() + (5 - endOfWeek.getDay()));
+  endOfWeek.setHours(23, 59, 59, 999);
+
+  const upcomingAssessments = await prisma.assignment.count({
+    where: {
+      section: {
+        teachers: { some: { teacherId } },
+      },
+      dueDate: { gte: today, lte: endOfWeek },
+      category: { in: ['Test', 'Quiz', 'Assessment', 'Exam', 'Final'] },
+    },
+  });
+
+  const studentsWithAccommodations = await prisma.student.count({
+    where: {
+      id: { in: studentIds },
+      accommodations: { some: { isActive: true } },
+    },
+  });
+
+  const activeInterventions = await prisma.intervention.count({
+    where: {
+      status: 'ACTIVE',
+      student: {
+        enrollments: {
+          some: {
+            status: 'ACTIVE',
+            section: { teachers: { some: { teacherId } } },
+          },
+        },
+      },
+    },
+  });
+
+  const weekAhead: WeekAhead = {
+    assessmentsCount: upcomingAssessments,
+    studentsWithAccommodations,
+    interventionCheckIns: activeInterventions,
+  };
+
+  return {
+    ...baseBriefing,
+    priorityActions,
+    todayStats,
+    celebrations,
+    weekAhead,
+  };
 }

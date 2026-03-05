@@ -30,18 +30,18 @@ export function InterventionTasksList({ tasks }: Props) {
   return (
     <div className="card">
       <div className="card-header flex items-center justify-between">
-        <h2 className="text-sm font-medium text-gray-900">Intervention Tasks</h2>
-        <span className={`badge ${overdueTasks.length > 0 ? 'badge-red' : tasks.length > 0 ? 'badge-blue' : 'badge-green'}`}>
+        <h2 className="text-sm font-medium text-atlas-text-primary">Intervention Tasks</h2>
+        <span className={`badge ${overdueTasks.length > 0 ? 'badge-rose' : tasks.length > 0 ? 'badge-indigo' : 'badge-emerald'}`}>
           {tasks.length}
         </span>
       </div>
       <div className="card-body">
         {tasks.length === 0 ? (
-          <p className="text-sm text-gray-500 text-center py-2">No intervention tasks today.</p>
+          <p className="text-sm text-atlas-text-secondary text-center py-2">No intervention tasks today.</p>
         ) : (
           <div className="space-y-2 max-h-64 overflow-y-auto">
             {overdueTasks.length > 0 && (
-              <p className="text-xs font-medium text-amber-600 uppercase">Overdue from yesterday</p>
+              <p className="text-xs font-medium text-atlas-amber-600 uppercase">Overdue from yesterday</p>
             )}
             {overdueTasks.map((task) => (
               <TaskItem
@@ -53,7 +53,7 @@ export function InterventionTasksList({ tasks }: Props) {
               />
             ))}
             {overdueTasks.length > 0 && todayTasks.length > 0 && (
-              <p className="text-xs font-medium text-gray-500 uppercase pt-2">Today</p>
+              <p className="text-xs font-medium text-atlas-text-tertiary uppercase pt-2">Today</p>
             )}
             {todayTasks.map((task) => (
               <TaskItem
@@ -83,23 +83,23 @@ function TaskItem({
   isOverdue: boolean;
 }) {
   return (
-    <div className={`flex items-center gap-3 p-2 rounded-md ${isOverdue ? 'bg-amber-50' : ''}`}>
+    <div className={`flex items-center gap-3 p-2 rounded-lg transition-colors ${isOverdue ? 'bg-atlas-amber-50' : ''}`}>
       <button
         onClick={onComplete}
         disabled={isCompleted}
-        className={`h-5 w-5 rounded border-2 flex items-center justify-center shrink-0 ${
+        className={`h-5 w-5 rounded border-2 flex items-center justify-center shrink-0 transition-colors ${
           isCompleted
-            ? 'bg-green-500 border-green-500 text-white'
-            : 'border-gray-300 hover:border-atlas-primary'
+            ? 'bg-atlas-emerald-500 border-atlas-emerald-500 text-white'
+            : 'border-atlas-border hover:border-atlas-indigo-500'
         }`}
       >
         {isCompleted && <span className="text-xs">{'\u2713'}</span>}
       </button>
       <div className="flex-1 min-w-0">
-        <Link to={`/students/${task.studentId}`} className="text-sm font-medium text-gray-900 hover:underline">
+        <Link to={`/students/${task.studentId}`} className="text-sm font-medium text-atlas-text-primary hover:underline">
           {task.firstName} {task.lastName}
         </Link>
-        <p className="text-xs text-gray-500 truncate">
+        <p className="text-xs text-atlas-text-secondary truncate">
           {task.type}{task.teacherRole ? ` — ${task.teacherRole}` : ''}
         </p>
       </div>

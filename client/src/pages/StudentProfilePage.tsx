@@ -1,21 +1,37 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { api } from '../services/api';
-import { StudentProfile } from '../types';
+import { EnhancedStudentProfile } from '../types';
 import { QuickObservationModal } from '../components/observations/QuickObservationModal';
 import { AIAssistantPanel } from '../components/ai/AIAssistantPanel';
+import { Avatar } from '../components/ui/Avatar';
+import { RiskBadge } from '../components/ui/RiskBadge';
+import { MetricCard } from '../components/ui/MetricCard';
+import { ProgressRing } from '../components/ui/ProgressRing';
+import { NarrativeSummary } from '../components/student/NarrativeSummary';
+import { RecommendedActions } from '../components/student/RecommendedActions';
+import { AttendanceCalendar } from '../components/student/AttendanceCalendar';
+import { Skeleton } from '../components/ui/SkeletonLoader';
+import {
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine,
+} from 'recharts';
+import {
+  PencilSquareIcon,
+  ArrowTopRightOnSquareIcon,
+  ChatBubbleLeftRightIcon,
+  PhoneIcon,
+} from '@heroicons/react/24/outline';
 
 export function StudentProfilePage() {
   const { studentId } = useParams<{ studentId: string }>();
-  const [profile, setProfile] = useState<StudentProfile | null>(null);
+  const [profile, setProfile] = useState<EnhancedStudentProfile | null>(null);
   const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState<'academic' | 'attendance' | 'accommodations' | 'observations' | 'interventions'>('academic');
   const [showObservation, setShowObservation] = useState(false);
   const [showAI, setShowAI] = useState(false);
 
   useEffect(() => {
     if (!studentId) return;
-    api.get<StudentProfile>(`/students/${studentId}`)
+    api.get<EnhancedStudentProfile>(`/students/${studentId}/enhanced`)
       .then(setProfile)
       .catch(() => {})
       .finally(() => setLoading(false));
@@ -23,70 +39,80 @@ export function StudentProfilePage() {
 
   if (loading) {
     return (
-      <div className="space-y-4 animate-pulse">
-        <div className="flex gap-4">
-          <div className="h-16 w-16 bg-gray-200 rounded-full" />
-          <div className="space-y-2">
-            <div className="h-6 bg-gray-200 rounded w-48" />
-            <div className="h-4 bg-gray-200 rounded w-32" />
+      <div className="space-y-6 max-w-5xl animate-fade-in">
+        <div className="card p-6">
+          <div className="flex gap-4">
+            <Skeleton className="h-20 w-20 rounded-full" />
+            <div className="space-y-2 flex-1">
+              <Skeleton className="h-6 w-48" />
+              <Skeleton className="h-4 w-32" />
+              <Skeleton className="h-6 w-24" />
+            </div>
           </div>
+        </div>
+        <Skeleton className="h-16 w-full rounded-card" />
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+          {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-24 rounded-card" />)}
         </div>
       </div>
     );
   }
 
-  if (!profile) return <p className="text-gray-500">Student not found.</p>;
-
-  const riskColor = profile.riskTier === 'URGENT' ? 'red' : profile.riskTier === 'NEEDS_SUPPORT' ? 'amber' : 'green';
+  if (!profile) return <p className="text-atlas-text-secondary">Student not found.</p>;
 
   return (
-    <div className="space-y-4">
-      {/* Header */}
-      <div className="card p-4">
-        <div className="flex items-start justify-between">
+    <div className="space-y-6 max-w-5xl">
+      {/* Hero Header */}
+      <div className="card p-6">
+        <div className="flex items-start justify-between flex-wrap gap-4">
           <div className="flex items-center gap-4">
-            <div className="h-16 w-16 rounded-full bg-atlas-accent/20 flex items-center justify-center text-lg font-bold text-atlas-primary">
-              {profile.firstName[0]}{profile.lastName[0]}
-            </div>
+            <Avatar
+              firstName={profile.firstName}
+              lastName={profile.lastName}
+              photoUrl={profile.photoUrl}
+              size="xl"
+              riskTier={profile.riskTier}
+            />
             <div>
-              <h1 className="text-xl font-bold text-gray-900">
+              <h1 className="text-headline text-atlas-text-primary">
                 {profile.firstName} {profile.lastName}
               </h1>
-              <p className="text-sm text-gray-500">Grade {profile.gradeLevel}</p>
-              <div className="flex gap-2 mt-1">
-                <span className={`badge badge-${riskColor}`}>
-                  {profile.riskTier === 'ON_TRACK' ? 'On Track' : profile.riskTier === 'NEEDS_SUPPORT' ? 'Needs Support' : 'Urgent'}
-                </span>
-                {profile.ellStatus && <span className="badge badge-blue">ELL</span>}
-                {profile.iepActive && <span className="badge badge-purple">IEP</span>}
-                {profile.has504 && <span className="badge badge-purple">504</span>}
+              <p className="text-sm text-atlas-text-secondary">Grade {profile.gradeLevel}</p>
+              <div className="flex flex-wrap gap-2 mt-2">
+                <RiskBadge tier={profile.riskTier} />
+                {profile.ellStatus && <span className="badge badge-sky">ELL</span>}
+                {profile.iepActive && <span className="badge badge-violet">IEP</span>}
+                {profile.has504 && <span className="badge badge-violet">504</span>}
               </div>
             </div>
           </div>
-          <div className="flex gap-2">
-            <button onClick={() => setShowObservation(true)} className="btn-secondary text-sm">
-              Add Observation
+          <div className="flex flex-wrap gap-2">
+            <button onClick={() => setShowObservation(true)} className="btn-primary text-sm">
+              <PencilSquareIcon className="h-4 w-4 mr-1.5" />
+              Observation
             </button>
             <Link to={`/referrals/new/${profile.id}`} className="btn-secondary text-sm">
+              <ArrowTopRightOnSquareIcon className="h-4 w-4 mr-1.5" />
               Refer to SST
             </Link>
             <button onClick={() => setShowAI(!showAI)} className="btn-ghost text-sm">
+              <ChatBubbleLeftRightIcon className="h-4 w-4 mr-1.5" />
               AI Assistant
             </button>
           </div>
         </div>
 
-        {/* Parent Contact */}
         {profile.guardians.length > 0 && (
-          <div className="mt-3 pt-3 border-t border-atlas-border">
-            <p className="text-xs text-gray-500 mb-1">Parent/Guardian Contact</p>
-            <div className="flex gap-4 flex-wrap">
+          <div className="mt-4 pt-4 border-t border-atlas-border">
+            <p className="text-xs font-medium text-atlas-text-tertiary uppercase tracking-wider mb-2">Parent/Guardian</p>
+            <div className="flex flex-wrap gap-4">
               {profile.guardians.map((g) => (
-                <div key={g.id} className="text-sm">
+                <div key={g.id} className="flex items-center gap-2 text-sm">
+                  <PhoneIcon className="h-4 w-4 text-atlas-text-tertiary" />
                   <span className="font-medium">{g.firstName} {g.lastName}</span>
-                  <span className="text-gray-500"> ({g.relation})</span>
-                  {g.email && <span className="text-atlas-primary ml-2">{g.email}</span>}
-                  {g.phone && <span className="text-gray-600 ml-2">{g.phone}</span>}
+                  <span className="text-atlas-text-tertiary">({g.relation})</span>
+                  {g.email && <a href={`mailto:${g.email}`} className="text-atlas-indigo-600 hover:underline">{g.email}</a>}
+                  {g.phone && <span className="text-atlas-text-secondary">{g.phone}</span>}
                 </div>
               ))}
             </div>
@@ -94,259 +120,235 @@ export function StudentProfilePage() {
         )}
       </div>
 
-      {/* Tabs */}
-      <div className="border-b border-atlas-border">
-        <nav className="flex gap-4">
-          {([
-            ['academic', 'Academic'],
-            ['attendance', 'Attendance'],
-            ['accommodations', 'Accommodations'],
-            ['observations', 'Observations'],
-            ['interventions', 'Interventions'],
-          ] as const).map(([key, label]) => (
-            <button
-              key={key}
-              onClick={() => setTab(key)}
-              className={`pb-2 text-sm font-medium border-b-2 transition-colors ${
-                tab === key
-                  ? 'border-atlas-primary text-atlas-primary'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              {label}
-              {key === 'observations' && profile.observations.length > 0 && (
-                <span className="ml-1 text-xs text-gray-400">({profile.observations.length})</span>
-              )}
-            </button>
-          ))}
-        </nav>
-      </div>
+      <div className={`grid gap-6 ${showAI ? 'grid-cols-1 lg:grid-cols-3' : 'grid-cols-1'}`}>
+        <div className={showAI ? 'lg:col-span-2 space-y-6' : 'space-y-6'}>
+          {/* Narrative Summary */}
+          {profile.narrativeSummary && (
+            <NarrativeSummary summary={profile.narrativeSummary} trajectory={profile.riskAnalysis.trajectory} />
+          )}
 
-      {/* Tab Content */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <div className={showAI ? 'lg:col-span-2' : 'lg:col-span-3'}>
-          {tab === 'academic' && (
-            <div className="space-y-4">
-              {/* Per-class performance */}
-              {profile.myClassPerformance.map((perf) => (
-                <div key={perf.sectionName} className="card">
-                  <div className="card-header flex items-center justify-between">
-                    <h3 className="text-sm font-medium text-gray-900">{perf.sectionName}</h3>
-                    <span className={`badge badge-${perf.currentGradePercent >= 73 ? 'green' : perf.currentGradePercent >= 60 ? 'amber' : 'red'}`}>
-                      {perf.letterGrade} ({perf.currentGradePercent}%)
-                    </span>
-                  </div>
-                  <div className="card-body">
-                    <div className="flex gap-6 text-sm mb-3">
-                      <div>
-                        <span className="text-gray-500">Missing: </span>
-                        <span className={perf.missingCount > 0 ? 'text-red-600 font-medium' : 'text-gray-700'}>{perf.missingCount}</span>
-                      </div>
-                    </div>
-                    {/* Grade trend */}
-                    <div className="flex items-end gap-1 h-12 mb-3">
-                      {perf.trendData.map((point, i) => (
-                        <div
-                          key={i}
-                          className={`flex-1 rounded-t ${point.grade >= 73 ? 'bg-green-400' : point.grade >= 60 ? 'bg-amber-400' : 'bg-red-400'}`}
-                          style={{ height: `${Math.max(4, (point.grade / 100) * 48)}px` }}
-                          title={`${point.week}: ${point.grade}%`}
-                        />
-                      ))}
-                    </div>
-                    {/* Recent grades */}
-                    <div className="space-y-1">
-                      {perf.recentGrades.map((g, i) => (
-                        <div key={i} className="flex justify-between text-xs text-gray-600">
-                          <span>{g.assignmentName}</span>
-                          <span className={g.score / g.possible < 0.6 ? 'text-red-600 font-medium' : ''}>
-                            {g.score}/{g.possible}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              ))}
+          {/* Recommended Actions */}
+          <RecommendedActions actions={profile.recommendedActions} studentId={profile.id} />
 
-              {/* Overall snapshot */}
-              <div className="card">
-                <div className="card-header">
-                  <h3 className="text-sm font-medium text-gray-900">Overall Academic Snapshot</h3>
-                </div>
-                <div className="card-body space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Cumulative GPA</span>
-                    <span className="font-medium">{profile.overallAcademicSnapshot.cumulativeGpa?.toFixed(2) || 'N/A'}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Failing courses</span>
-                    <span className={`font-medium ${profile.overallAcademicSnapshot.failingCourseCount > 0 ? 'text-red-600' : ''}`}>
-                      {profile.overallAcademicSnapshot.failingCourseCount}
-                    </span>
-                  </div>
-                  {profile.overallAcademicSnapshot.totalCredits !== null && (
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-600">Credits</span>
-                      <span className="font-medium">
-                        {profile.overallAcademicSnapshot.totalCredits} / {profile.overallAcademicSnapshot.creditsRequired || '?'}
+          {/* Metrics Row */}
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+            <MetricCard label="GPA" value={profile.overallAcademicSnapshot.cumulativeGpa?.toFixed(2) || 'N/A'} />
+            <MetricCard label="Attendance" value={`${profile.attendance.overallRate}%`} variant={profile.attendance.overallRate < 90 ? 'danger' : 'success'}>
+              <ProgressRing value={profile.attendance.overallRate} size={32} showValue={false} />
+            </MetricCard>
+            <MetricCard label="Missing Work" value={profile.myClassPerformance.reduce((sum, c) => sum + c.missingCount, 0)} variant="warning" />
+            <MetricCard label="Interventions" value={profile.activeInterventions.length} />
+            <MetricCard label="Failing" value={profile.overallAcademicSnapshot.failingCourseCount} variant={profile.overallAcademicSnapshot.failingCourseCount > 0 ? 'danger' : 'success'} />
+          </div>
+
+          {/* Academic Performance */}
+          <div>
+            <h2 className="section-title">Academic Performance</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {profile.myClassPerformance.map((perf) => {
+                const trajectory = profile.gradeTrajectory.find((t) => t.sectionName === perf.sectionName);
+                const comparison = profile.classComparison.find((c) => c.sectionName === perf.sectionName);
+
+                return (
+                  <div key={perf.sectionName} className="card">
+                    <div className="card-header flex items-center justify-between">
+                      <h3 className="text-sm font-semibold text-atlas-text-primary">{perf.sectionName}</h3>
+                      <span className={`badge ${perf.currentGradePercent >= 73 ? 'badge-emerald' : perf.currentGradePercent >= 60 ? 'badge-amber' : 'badge-rose'}`}>
+                        {perf.letterGrade} ({perf.currentGradePercent}%)
                       </span>
                     </div>
-                  )}
-                  {profile.overallAcademicSnapshot.assessmentScores.length > 0 && (
-                    <div className="mt-3 pt-3 border-t border-atlas-border">
-                      <p className="text-xs text-gray-500 mb-2">Assessment Scores</p>
-                      {profile.overallAcademicSnapshot.assessmentScores.map((score, i) => (
-                        <div key={i} className="flex justify-between text-xs text-gray-600">
-                          <span>{score.name} ({score.subject})</span>
-                          <span className="font-medium">
-                            {score.score}{score.percentile ? ` (${score.percentile}th pct)` : ''}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
+                    <div className="card-body space-y-3">
+                      <ResponsiveContainer width="100%" height={100}>
+                        <AreaChart data={perf.trendData}>
+                          <defs>
+                            <linearGradient id={`g-${perf.sectionName.replace(/[^a-zA-Z]/g, '')}`} x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="0%" stopColor="#4f46e5" stopOpacity={0.2} />
+                              <stop offset="100%" stopColor="#4f46e5" stopOpacity={0} />
+                            </linearGradient>
+                          </defs>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                          <XAxis dataKey="week" tick={{ fontSize: 9 }} tickFormatter={(v) => v.slice(5)} />
+                          <YAxis domain={[0, 100]} tick={{ fontSize: 9 }} />
+                          <Tooltip formatter={(v: any) => [`${v}%`, 'Grade']} />
+                          <ReferenceLine y={73} stroke="#d97706" strokeDasharray="4 4" />
+                          <Area type="monotone" dataKey="grade" stroke="#4f46e5" strokeWidth={2} fill={`url(#g-${perf.sectionName.replace(/[^a-zA-Z]/g, '')})`} />
+                        </AreaChart>
+                      </ResponsiveContainer>
 
-          {tab === 'attendance' && (
-            <div className="card">
-              <div className="card-header">
-                <h3 className="text-sm font-medium text-gray-900">Attendance</h3>
-              </div>
-              <div className="card-body space-y-3">
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div>
-                    <p className="text-xs text-gray-500">Overall Rate</p>
-                    <p className={`text-xl font-bold ${profile.attendance.overallRate >= 95 ? 'text-green-600' : profile.attendance.overallRate >= 90 ? 'text-amber-600' : 'text-red-600'}`}>
-                      {profile.attendance.overallRate}%
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-500">Absent This Month</p>
-                    <p className="text-xl font-bold text-gray-900">{profile.attendance.daysAbsentThisMonth}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-500">Consecutive Absences</p>
-                    <p className={`text-xl font-bold ${profile.attendance.consecutiveAbsenceStreak >= 3 ? 'text-red-600' : 'text-gray-900'}`}>
-                      {profile.attendance.consecutiveAbsenceStreak}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-500">Tardies</p>
-                    <p className="text-xl font-bold text-gray-900">{profile.attendance.tardyCount}</p>
-                  </div>
-                </div>
-
-                {profile.attendance.periodRates.length > 0 && (
-                  <div className="pt-3 border-t border-atlas-border">
-                    <p className="text-xs text-gray-500 mb-2">Per-Period Attendance</p>
-                    {profile.attendance.periodRates.map((pr) => (
-                      <div key={pr.period} className="flex justify-between text-sm">
-                        <span className="text-gray-600">{pr.period}</span>
-                        <span className={`font-medium ${pr.rate >= 95 ? 'text-green-600' : pr.rate >= 90 ? 'text-amber-600' : 'text-red-600'}`}>
-                          {pr.rate}%
-                        </span>
+                      <div className="flex items-center gap-3 text-xs text-atlas-text-tertiary">
+                        {comparison && (
+                          <>
+                            <span>Class avg: <strong className="text-atlas-text-secondary">{comparison.classAverage}%</strong></span>
+                            <span>Rank: <strong className="text-atlas-text-secondary">Top {Math.max(1, 100 - comparison.percentile)}%</strong></span>
+                          </>
+                        )}
+                        {trajectory && (
+                          <span>Projected: <strong className="text-atlas-text-secondary">{trajectory.projectedEndOfTerm}%</strong></span>
+                        )}
                       </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
 
-          {tab === 'accommodations' && (
-            <div className="card">
-              <div className="card-header">
-                <h3 className="text-sm font-medium text-gray-900">Accommodations</h3>
-              </div>
-              <div className="card-body">
-                {profile.accommodations.length > 0 ? (
-                  <div className="space-y-3">
-                    {profile.accommodations.map((acc, i) => (
-                      <div key={i} className="flex items-start gap-3 p-3 bg-purple-50 rounded-lg">
-                        <span className="badge badge-purple">{acc.type}</span>
-                        <div>
-                          <p className="text-sm text-gray-900">{acc.description}</p>
-                          <p className="text-xs text-gray-500 mt-1">Category: {acc.category}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-sm text-gray-500 text-center py-4">No active accommodations.</p>
-                )}
-              </div>
-            </div>
-          )}
+                      {perf.missingCount > 0 && (
+                        <p className="text-xs text-atlas-rose-600 font-medium">{perf.missingCount} missing</p>
+                      )}
 
-          {tab === 'observations' && (
-            <div className="space-y-3">
-              <button onClick={() => setShowObservation(true)} className="btn-primary text-sm">
-                Add Observation
-              </button>
-              {profile.observations.length > 0 ? (
-                profile.observations.map((obs) => (
-                  <div
-                    key={obs.id}
-                    className={`card p-4 severity-bar-${obs.severity === 'URGENT' ? 'red' : obs.severity === 'CONCERN' ? 'amber' : 'green'}`}
-                  >
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className={`badge badge-${obs.severity === 'POSITIVE' ? 'green' : obs.severity === 'CONCERN' ? 'amber' : 'red'}`}>
-                        {obs.severity}
-                      </span>
-                      <span className="badge badge-gray">{obs.category}</span>
-                      <span className="text-xs text-gray-500 ml-auto">
-                        {new Date(obs.createdAt).toLocaleDateString()}
-                      </span>
-                    </div>
-                    <p className="text-sm text-gray-700">{obs.content}</p>
-                    {obs.isEditable && (
-                      <p className="text-xs text-gray-400 mt-1">Editable for 24 hours</p>
-                    )}
-                  </div>
-                ))
-              ) : (
-                <p className="text-sm text-gray-500 text-center py-4">No observations logged yet.</p>
-              )}
-            </div>
-          )}
-
-          {tab === 'interventions' && (
-            <div className="space-y-3">
-              {profile.activeInterventions.length > 0 ? (
-                profile.activeInterventions.map((intervention) => (
-                  <div key={intervention.id} className="card p-4">
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="badge badge-blue">{intervention.tier}</span>
-                      <h4 className="text-sm font-medium text-gray-900">{intervention.type}</h4>
-                    </div>
-                    <p className="text-sm text-gray-600 mb-2">{intervention.description}</p>
-                    {intervention.teacherRole && (
-                      <div className="bg-blue-50 rounded p-2 text-sm text-blue-800 mb-2">
-                        <strong>Your role:</strong> {intervention.teacherRole}
-                      </div>
-                    )}
-                    {intervention.logs.length > 0 && (
                       <div className="space-y-1">
-                        <p className="text-xs text-gray-500">Recent logs:</p>
-                        {intervention.logs.map((log, i) => (
-                          <div key={i} className="flex justify-between text-xs text-gray-600">
-                            <span>{log.date}</span>
-                            <span className={`badge badge-${log.status === 'COMPLETED' ? 'green' : log.status === 'PARTIALLY_COMPLETED' ? 'amber' : 'red'} text-xs`}>
-                              {log.status.replace(/_/g, ' ')}
+                        {perf.recentGrades.slice(0, 3).map((g, i) => (
+                          <div key={i} className="flex justify-between text-xs text-atlas-text-secondary">
+                            <span className="truncate mr-2">{g.assignmentName}</span>
+                            <span className={`font-medium ${g.score / g.possible < 0.6 ? 'text-atlas-rose-600' : ''}`}>
+                              {g.score}/{g.possible}
                             </span>
                           </div>
                         ))}
                       </div>
-                    )}
+                    </div>
                   </div>
-                ))
-              ) : (
-                <p className="text-sm text-gray-500 text-center py-4">No active interventions.</p>
-              )}
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Attendance */}
+          <div>
+            <h2 className="section-title">Attendance</h2>
+            <div className="card">
+              <div className="card-body space-y-4">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div>
+                    <p className="text-xs text-atlas-text-tertiary">Overall Rate</p>
+                    <p className={`text-2xl font-bold ${profile.attendance.overallRate >= 95 ? 'text-atlas-emerald-600' : profile.attendance.overallRate >= 90 ? 'text-atlas-amber-600' : 'text-atlas-rose-600'}`}>
+                      {profile.attendance.overallRate}%
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-atlas-text-tertiary">Absent This Month</p>
+                    <p className="text-2xl font-bold text-atlas-text-primary">{profile.attendance.daysAbsentThisMonth}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-atlas-text-tertiary">Consecutive</p>
+                    <p className={`text-2xl font-bold ${profile.attendance.consecutiveAbsenceStreak >= 3 ? 'text-atlas-rose-600' : 'text-atlas-text-primary'}`}>
+                      {profile.attendance.consecutiveAbsenceStreak}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-atlas-text-tertiary">Tardies</p>
+                    <p className="text-2xl font-bold text-atlas-text-primary">{profile.attendance.tardyCount}</p>
+                  </div>
+                </div>
+
+                {profile.attendanceCalendar.length > 0 && (
+                  <div className="pt-4 border-t border-atlas-border">
+                    <p className="text-xs font-medium text-atlas-text-tertiary mb-2">Last 90 Days</p>
+                    <AttendanceCalendar data={profile.attendanceCalendar} />
+                  </div>
+                )}
+
+                {profile.attendance.periodRates.length > 0 && (
+                  <div className="pt-4 border-t border-atlas-border">
+                    <p className="text-xs font-medium text-atlas-text-tertiary mb-2">Per-Period</p>
+                    <div className="flex flex-wrap gap-4">
+                      {profile.attendance.periodRates.map((pr) => (
+                        <ProgressRing key={pr.period} value={pr.rate} size={48} strokeWidth={4} label={pr.period} />
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Support & Interventions */}
+          {(profile.accommodations.length > 0 || profile.activeInterventions.length > 0) && (
+            <div>
+              <h2 className="section-title">Support & Interventions</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {profile.accommodations.length > 0 && (
+                  <div className="card">
+                    <div className="card-header"><h3 className="text-sm font-semibold">Accommodations</h3></div>
+                    <div className="card-body space-y-2">
+                      {profile.accommodations.map((acc, i) => (
+                        <div key={i} className="flex items-start gap-2 p-2 bg-atlas-violet-50 rounded-lg">
+                          <span className="badge badge-violet text-[10px]">{acc.type}</span>
+                          <div>
+                            <p className="text-sm">{acc.description}</p>
+                            <p className="text-xs text-atlas-text-tertiary">{acc.category}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {profile.activeInterventions.length > 0 && (
+                  <div className="card">
+                    <div className="card-header"><h3 className="text-sm font-semibold">Active Interventions</h3></div>
+                    <div className="card-body space-y-3">
+                      {profile.activeInterventions.map((int) => (
+                        <div key={int.id} className="p-3 border border-atlas-border rounded-lg">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="badge badge-sky">{int.tier}</span>
+                            <h4 className="text-sm font-medium">{int.type}</h4>
+                          </div>
+                          <p className="text-xs text-atlas-text-secondary">{int.description}</p>
+                          {int.teacherRole && (
+                            <p className="text-xs bg-atlas-sky-50 text-atlas-sky-800 p-2 rounded mt-2">
+                              <strong>Your role:</strong> {int.teacherRole}
+                            </p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Observations */}
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="section-title mb-0">Observations</h2>
+              <button onClick={() => setShowObservation(true)} className="btn-primary text-sm">Add Observation</button>
+            </div>
+            {profile.observations.length > 0 ? (
+              <div className="space-y-2">
+                {profile.observations.map((obs) => (
+                  <div key={obs.id} className={`card p-4 border-l-4 ${obs.severity === 'URGENT' ? 'border-l-atlas-rose-500' : obs.severity === 'CONCERN' ? 'border-l-atlas-amber-500' : 'border-l-atlas-emerald-500'}`}>
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className={`badge ${obs.severity === 'POSITIVE' ? 'badge-emerald' : obs.severity === 'CONCERN' ? 'badge-amber' : 'badge-rose'}`}>{obs.severity}</span>
+                      <span className="badge badge-gray">{obs.category}</span>
+                      <span className="text-xs text-atlas-text-tertiary ml-auto">{new Date(obs.createdAt).toLocaleDateString()}</span>
+                    </div>
+                    <p className="text-sm text-atlas-text-secondary mt-1">{obs.content}</p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="card p-8 text-center">
+                <p className="text-sm text-atlas-text-tertiary">No observations logged yet.</p>
+              </div>
+            )}
+          </div>
+
+          {/* Assessment Scores */}
+          {profile.overallAcademicSnapshot.assessmentScores.length > 0 && (
+            <div>
+              <h2 className="section-title">Assessment Scores</h2>
+              <div className="card">
+                <div className="card-body space-y-2">
+                  {profile.overallAcademicSnapshot.assessmentScores.map((score, i) => (
+                    <div key={i} className="flex items-center justify-between py-2 border-b border-atlas-border last:border-0">
+                      <div>
+                        <p className="text-sm font-medium">{score.name}</p>
+                        <p className="text-xs text-atlas-text-tertiary">{score.subject} · {score.date}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm font-semibold">{score.score}</p>
+                        {score.percentile && <p className="text-xs text-atlas-text-tertiary">{score.percentile}th pct</p>}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           )}
         </div>
@@ -369,9 +371,8 @@ export function StudentProfilePage() {
           onClose={() => setShowObservation(false)}
           onSaved={() => {
             setShowObservation(false);
-            // Refresh profile
             if (studentId) {
-              api.get<StudentProfile>(`/students/${studentId}`).then(setProfile);
+              api.get<EnhancedStudentProfile>(`/students/${studentId}/enhanced`).then(setProfile);
             }
           }}
         />

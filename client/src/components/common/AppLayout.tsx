@@ -3,6 +3,15 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useState, useEffect } from 'react';
 import { api } from '../../services/api';
 import { SectionInfo } from '../../types';
+import { AnimatePresence, motion } from 'framer-motion';
+import {
+  SunIcon,
+  UsersIcon,
+  ChartBarIcon,
+  BellIcon,
+  Bars3Icon,
+  ArrowRightStartOnRectangleIcon,
+} from '@heroicons/react/24/outline';
 
 export function AppLayout() {
   const { isAuthenticated, isLoading, teacher, logout } = useAuth();
@@ -20,10 +29,10 @@ export function AppLayout() {
 
   if (isLoading) {
     return (
-      <div className="flex h-screen items-center justify-center">
+      <div className="flex h-screen items-center justify-center bg-atlas-bg">
         <div className="text-center">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-atlas-primary border-t-transparent mx-auto" />
-          <p className="mt-2 text-sm text-gray-500">Loading AtlasED Classroom...</p>
+          <div className="h-10 w-10 animate-spin rounded-full border-4 border-atlas-indigo-600 border-t-transparent mx-auto" />
+          <p className="mt-3 text-sm text-atlas-text-secondary">Loading AtlasED Classroom...</p>
         </div>
       </div>
     );
@@ -34,123 +43,166 @@ export function AppLayout() {
   }
 
   const navItems = [
-    { path: '/briefing', label: 'Morning Briefing', icon: '☀' },
-    { path: '/roster', label: 'My Students', icon: '👥' },
+    { path: '/briefing', label: 'Command Center', icon: SunIcon },
+    { path: '/roster', label: 'My Students', icon: UsersIcon },
+    { path: '/insights', label: 'Insights', icon: ChartBarIcon },
   ];
 
   const isActive = (path: string) => location.pathname === path;
 
-  return (
-    <div className="flex h-screen bg-atlas-background">
-      {/* Sidebar - Desktop */}
-      <aside className="hidden md:flex md:w-64 md:flex-col bg-white border-r border-atlas-border">
-        <div className="flex h-14 items-center px-4 border-b border-atlas-border">
-          <h1 className="text-lg font-bold text-atlas-primary">AtlasED Classroom</h1>
-        </div>
-
-        <nav className="flex-1 overflow-y-auto px-2 py-4 space-y-1">
-          {navItems.map((item) => (
+  const sidebarContent = (
+    <>
+      <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
+        {navItems.map((item) => {
+          const Icon = item.icon;
+          return (
             <Link
               key={item.path}
               to={item.path}
-              className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+              onClick={() => setSidebarOpen(false)}
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 ${
                 isActive(item.path)
-                  ? 'bg-blue-50 text-atlas-primary'
-                  : 'text-gray-700 hover:bg-gray-100'
+                  ? 'bg-atlas-indigo-50 text-atlas-indigo-700 shadow-sm'
+                  : 'text-atlas-text-secondary hover:bg-gray-50 hover:text-atlas-text-primary'
               }`}
             >
-              <span>{item.icon}</span>
+              <Icon className="h-5 w-5 flex-shrink-0" />
               {item.label}
             </Link>
-          ))}
+          );
+        })}
 
-          <div className="pt-4 pb-2 px-3">
-            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Sections</p>
+        <div className="pt-5 pb-2 px-3">
+          <p className="section-title mb-0">Sections</p>
+        </div>
+        {teacher?.sections?.map((section: SectionInfo) => (
+          <Link
+            key={section.id}
+            to={`/sections/${section.id}`}
+            onClick={() => setSidebarOpen(false)}
+            className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all duration-150 ${
+              location.pathname === `/sections/${section.id}`
+                ? 'bg-atlas-indigo-50 text-atlas-indigo-700'
+                : 'text-atlas-text-secondary hover:bg-gray-50 hover:text-atlas-text-primary'
+            }`}
+          >
+            <span className="text-[10px] font-semibold bg-atlas-indigo-100 text-atlas-indigo-700 rounded px-1.5 py-0.5">
+              {section.period}
+            </span>
+            <span className="truncate">{section.courseName}</span>
+          </Link>
+        ))}
+      </nav>
+
+      <div className="border-t border-atlas-border p-4">
+        <div className="flex items-center gap-3">
+          <div className="h-9 w-9 rounded-full bg-atlas-indigo-100 flex items-center justify-center text-sm font-semibold text-atlas-indigo-700">
+            {teacher?.firstName?.[0]}{teacher?.lastName?.[0]}
           </div>
-          {teacher?.sections?.map((section: SectionInfo) => (
-            <Link
-              key={section.id}
-              to={`/sections/${section.id}`}
-              className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors ${
-                location.pathname === `/sections/${section.id}`
-                  ? 'bg-blue-50 text-atlas-primary'
-                  : 'text-gray-600 hover:bg-gray-100'
-              }`}
-            >
-              <span className="text-xs bg-gray-200 rounded px-1.5 py-0.5">{section.period}</span>
-              {section.courseName}
-            </Link>
-          ))}
-        </nav>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium text-atlas-text-primary truncate">
+              {teacher?.firstName} {teacher?.lastName}
+            </p>
+            <p className="text-xs text-atlas-text-tertiary truncate">{teacher?.school?.name}</p>
+          </div>
+          <button
+            onClick={logout}
+            className="p-1.5 rounded-lg text-atlas-text-tertiary hover:text-atlas-text-primary hover:bg-gray-100 transition-colors"
+            title="Sign out"
+          >
+            <ArrowRightStartOnRectangleIcon className="h-4 w-4" />
+          </button>
+        </div>
+      </div>
+    </>
+  );
 
-        <div className="border-t border-atlas-border px-4 py-3">
-          <div className="flex items-center justify-between">
-            <div className="text-sm">
-              <p className="font-medium text-gray-900">{teacher?.firstName} {teacher?.lastName}</p>
-              <p className="text-gray-500 text-xs">{teacher?.school?.name}</p>
+  return (
+    <div className="flex h-screen bg-atlas-bg">
+      {/* Sidebar - Desktop */}
+      <aside className="hidden md:flex md:w-64 md:flex-col bg-atlas-surface border-r border-atlas-border">
+        <div className="flex h-14 items-center px-5 border-b border-atlas-border">
+          <div className="flex items-center gap-2">
+            <div className="h-7 w-7 rounded-lg bg-atlas-indigo-600 flex items-center justify-center">
+              <span className="text-xs font-bold text-white">A</span>
             </div>
-            <button onClick={logout} className="text-xs text-gray-400 hover:text-gray-600">
-              Sign out
-            </button>
+            <h1 className="text-base font-bold text-atlas-text-primary">AtlasED</h1>
           </div>
         </div>
+        {sidebarContent}
       </aside>
 
       {/* Mobile sidebar overlay */}
-      {sidebarOpen && (
-        <div className="fixed inset-0 z-40 md:hidden">
-          <div className="absolute inset-0 bg-black/50" onClick={() => setSidebarOpen(false)} />
-          <aside className="relative w-64 bg-white h-full shadow-xl">
-            <nav className="px-2 py-4 space-y-1">
-              {navItems.map((item) => (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  onClick={() => setSidebarOpen(false)}
-                  className="flex items-center gap-3 px-3 py-2 rounded-md text-sm text-gray-700 hover:bg-gray-100"
-                >
-                  <span>{item.icon}</span>
-                  {item.label}
-                </Link>
-              ))}
-            </nav>
-          </aside>
-        </div>
-      )}
+      <AnimatePresence>
+        {sidebarOpen && (
+          <div className="fixed inset-0 z-40 md:hidden">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-atlas-overlay"
+              onClick={() => setSidebarOpen(false)}
+            />
+            <motion.aside
+              initial={{ x: -256 }}
+              animate={{ x: 0 }}
+              exit={{ x: -256 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+              className="relative w-64 bg-atlas-surface h-full shadow-modal flex flex-col"
+            >
+              <div className="flex h-14 items-center px-5 border-b border-atlas-border">
+                <div className="flex items-center gap-2">
+                  <div className="h-7 w-7 rounded-lg bg-atlas-indigo-600 flex items-center justify-center">
+                    <span className="text-xs font-bold text-white">A</span>
+                  </div>
+                  <h1 className="text-base font-bold text-atlas-text-primary">AtlasED</h1>
+                </div>
+              </div>
+              {sidebarContent}
+            </motion.aside>
+          </div>
+        )}
+      </AnimatePresence>
 
       {/* Main content */}
       <div className="flex flex-1 flex-col min-w-0">
         {/* Top header */}
-        <header className="flex h-14 items-center justify-between border-b border-atlas-border bg-white px-4">
+        <header className="flex h-14 items-center justify-between border-b border-atlas-border bg-atlas-surface px-4 md:px-6">
           <button
-            className="md:hidden p-2 text-gray-600"
+            className="md:hidden p-2 rounded-lg text-atlas-text-secondary hover:bg-gray-100 transition-colors"
             onClick={() => setSidebarOpen(true)}
           >
-            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
+            <Bars3Icon className="h-5 w-5" />
           </button>
 
           <div className="flex-1" />
 
           <Link
             to="/notifications"
-            className="relative p-2 text-gray-600 hover:text-gray-900"
+            className="relative p-2 rounded-lg text-atlas-text-secondary hover:bg-gray-100 hover:text-atlas-text-primary transition-colors"
           >
-            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-            </svg>
+            <BellIcon className="h-5 w-5" />
             {unreadCount > 0 && (
-              <span className="absolute top-1 right-1 h-4 w-4 rounded-full bg-atlas-danger text-white text-xs flex items-center justify-center">
+              <span className="absolute top-1 right-1 h-4 w-4 rounded-full bg-atlas-rose-500 text-white text-[10px] font-semibold flex items-center justify-center ring-2 ring-white">
                 {unreadCount > 9 ? '9+' : unreadCount}
               </span>
             )}
           </Link>
         </header>
 
-        {/* Page content */}
+        {/* Page content with animation */}
         <main className="flex-1 overflow-y-auto p-4 md:p-6">
-          <Outlet />
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={location.pathname}
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -6 }}
+              transition={{ duration: 0.15 }}
+            >
+              <Outlet />
+            </motion.div>
+          </AnimatePresence>
         </main>
       </div>
     </div>
