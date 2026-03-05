@@ -107,6 +107,11 @@ async function addCounselorScenario(districtId: string, schoolId: string): Promi
     },
   });
 
+  // Verify the school belongs to the requesting district
+  if (school.districtId !== districtId) {
+    throw new Error('Unauthorized: School does not belong to the requesting district');
+  }
+
   const totalStudents = school.students.length;
   const atRiskStudents = school.students.filter((s) => s.riskTier !== 'ON_TRACK').length;
   const currentCounselors = school.counselors.length;
@@ -145,7 +150,7 @@ async function addCounselorScenario(districtId: string, schoolId: string): Promi
 }
 
 async function moveCounselorScenario(
-  _districtId: string,
+  districtId: string,
   fromSchoolId: string,
   toSchoolId: string
 ): Promise<WhatIfScenario> {
@@ -165,6 +170,11 @@ async function moveCounselorScenario(
       },
     }),
   ]);
+
+  // Verify both schools belong to the requesting district
+  if (fromSchool.districtId !== districtId || toSchool.districtId !== districtId) {
+    throw new Error('Unauthorized: One or both schools do not belong to the requesting district');
+  }
 
   const fromNewCount = fromSchool.counselors.length - 1;
   const toNewCount = toSchool.counselors.length + 1;
