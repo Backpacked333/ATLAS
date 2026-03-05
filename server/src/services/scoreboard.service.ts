@@ -1,4 +1,5 @@
 import { prisma } from '../utils/prisma';
+import { ForbiddenError } from '../utils/errors';
 import {
   SchoolScoreboardEntry,
   ScoreboardResponse,
@@ -98,8 +99,18 @@ export async function getScoreboard(districtId: string): Promise<ScoreboardRespo
 
 /**
  * Get comprehensive school deep dive profile.
+ * Verifies that the school belongs to the specified district.
  */
-export async function getSchoolDeepDive(schoolId: string): Promise<SchoolDeepDive> {
+export async function getSchoolDeepDive(schoolId: string, districtId: string): Promise<SchoolDeepDive> {
+  // Verify the school belongs to the district before proceeding
+  const school = await prisma.school.findFirst({
+    where: { id: schoolId, districtId },
+  });
+
+  if (!school) {
+    throw new ForbiddenError('School not found in your district');
+  }
+
   const [overview, outcomeTrends, mtssHealth, complianceStatus, equitySnapshot, staffCapacity, budgetAndRoi] =
     await Promise.all([
       getSchoolOverview(schoolId),

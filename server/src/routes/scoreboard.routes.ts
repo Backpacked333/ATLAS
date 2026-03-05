@@ -31,7 +31,7 @@ router.get(
   authenticateDistrictAdmin,
   async (req: AuthenticatedDistrictRequest, res: Response, next: NextFunction) => {
     try {
-      const deepDive = await getSchoolDeepDive(req.params.schoolId as string);
+      const deepDive = await getSchoolDeepDive(req.params.schoolId as string, req.districtAdmin!.districtId);
       res.json(deepDive);
     } catch (error) {
       next(error);
