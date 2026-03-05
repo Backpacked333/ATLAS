@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDistrictAuth } from '../../contexts/DistrictAuthContext';
 
@@ -9,10 +9,11 @@ export function CommandLoginPage() {
   const { login, isAuthenticated } = useDistrictAuth();
   const navigate = useNavigate();
 
-  if (isAuthenticated) {
-    navigate('/command/scoreboard', { replace: true });
-    return null;
-  }
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/command/scoreboard', { replace: true });
+    }
+  }, [isAuthenticated, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
