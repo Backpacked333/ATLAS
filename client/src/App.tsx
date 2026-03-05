@@ -22,30 +22,34 @@ import { DistrictAIPage } from './pages/command/DistrictAIPage';
 
 export default function App() {
   return (
-    <Routes>
-      {/* AtlasED Classroom (Teacher-level) routes */}
-      <Route path="/login" element={<AuthProvider><LoginPage /></AuthProvider>} />
-      <Route element={<AuthProvider><AppLayout /></AuthProvider>}>
-        <Route path="/" element={<Navigate to="/briefing" replace />} />
-        <Route path="/briefing" element={<BriefingPage />} />
-        <Route path="/roster" element={<RosterPage />} />
-        <Route path="/sections/:sectionId" element={<SectionPage />} />
-        <Route path="/students/:studentId" element={<StudentProfilePage />} />
-        <Route path="/referrals/new/:studentId" element={<ReferralPage />} />
-        <Route path="/notifications" element={<NotificationsPage />} />
-      </Route>
+    <AuthProvider>
+      <DistrictAuthProvider>
+        <Routes>
+          {/* AtlasED Classroom (Teacher-level) routes */}
+          <Route path="/login" element={<LoginPage />} />
+          <Route element={<AppLayout />}>
+            <Route path="/" element={<Navigate to="/briefing" replace />} />
+            <Route path="/briefing" element={<BriefingPage />} />
+            <Route path="/roster" element={<RosterPage />} />
+            <Route path="/sections/:sectionId" element={<SectionPage />} />
+            <Route path="/students/:studentId" element={<StudentProfilePage />} />
+            <Route path="/referrals/new/:studentId" element={<ReferralPage />} />
+            <Route path="/notifications" element={<NotificationsPage />} />
+          </Route>
 
-      {/* AtlasED Command (District-level) routes */}
-      <Route path="/command/login" element={<DistrictAuthProvider><CommandLoginPage /></DistrictAuthProvider>} />
-      <Route element={<DistrictAuthProvider><CommandLayout /></DistrictAuthProvider>}>
-        <Route path="/command" element={<Navigate to="/command/scoreboard" replace />} />
-        <Route path="/command/scoreboard" element={<ScoreboardPage />} />
-        <Route path="/command/schools/:schoolId" element={<SchoolDeepDivePage />} />
-        <Route path="/command/equity" element={<EquityDashboardPage />} />
-        <Route path="/command/resources" element={<ResourceAllocationPage />} />
-        <Route path="/command/reports" element={<ReportsPage />} />
-        <Route path="/command/ai" element={<DistrictAIPage />} />
-      </Route>
-    </Routes>
+          {/* AtlasED Command (District-level) routes */}
+          <Route path="/command/login" element={<CommandLoginPage />} />
+          <Route element={<CommandLayout />}>
+            <Route path="/command" element={<Navigate to="/command/scoreboard" replace />} />
+            <Route path="/command/scoreboard" element={<ScoreboardPage />} />
+            <Route path="/command/schools/:schoolId" element={<SchoolDeepDivePage />} />
+            <Route path="/command/equity" element={<EquityDashboardPage />} />
+            <Route path="/command/resources" element={<ResourceAllocationPage />} />
+            <Route path="/command/reports" element={<ReportsPage />} />
+            <Route path="/command/ai" element={<DistrictAIPage />} />
+          </Route>
+        </Routes>
+      </DistrictAuthProvider>
+    </AuthProvider>
   );
 }
